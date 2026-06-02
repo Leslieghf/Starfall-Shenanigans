@@ -9,23 +9,31 @@ local DAMPING = 1.5
 
 local BASE_GRAVITY = 9.01352
 
-local function getGravityCompensationForce(mass)
+local function getGravityCompensationForce(tr, pos, mass)
+    local height = pos.z - tr.HitPos.z
+    
+    if height > TARGET_HEIGHT then return Vector() end
+    
     return Vector(0, 0, mass * BASE_GRAVITY)
 end
 
-local function getSpringForce(tr, pos, mass)
-    if tr.Hit then
-        local height = pos.z - tr.HitPos.z
-        
-        local error = TARGET_HEIGHT - height
-        
-        return Vector(0, 0, error * SPRING * mass)
-    else
-        return Vector()
-    end
+local function getSpringForce(tr, pos, velZ, mass)
+    if !tr.Hit then return Vector() end
+
+    local height = pos.z - tr.HitPos.z
+
+    if height >= TARGET_HEIGHT then return Vector() end
+
+    local error = TARGET_HEIGHT - height
+
+    return Vector(0, 0, error * SPRING * mass)
 end
 
-local function getDampingForce(velZ, mass)
+local function getDampingForce(tr, pos, velZ, mass)
+    local height = pos.z - tr.HitPos.z
+    
+    if height > TARGET_HEIGHT then return Vector() end
+    
     return Vector(0, 0, -velZ * DAMPING * mass)
 end
 
@@ -38,6 +46,10 @@ local function applyTotalForce(ent, gravityCompensationForce, springForce, dampi
     ent:applyForceCenter(force)
 end
 
+local function isNotChip(ent)
+    return ent ~= chip()
+end
+
 hook.add("think", "hover", function()
     local ent = chip()
 
@@ -46,16 +58,17 @@ hook.add("think", "hover", function()
     local mass = ent:getMass()
 
     local tr = trace.trace(
-        pos - Vector(0, 0, 8),
-        pos - Vector(0, 0, TARGET_HEIGHT * 4)
+        pos,
+        pos - Vector(0, 0, TARGET_HEIGHT * 4),
+        isNotChip
     )
 
     if shouldApplyTotalForce(tr, vel.z, 500) then
         applyTotalForce(
             ent,
-            getGravityCompensationForce(mass),
-            getSpringForce(tr, pos, mass),
-            getDampingForce(vel.z, mass)
+            getGravityCompensationForce(tr, pos, mass),
+            getSpringForce(tr, pos, vel.z, mass),
+            getDampingForce(tr, pos, vel.z, mass)
         )
     end
 

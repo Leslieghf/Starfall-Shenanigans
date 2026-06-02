@@ -4,4 +4,5 @@ folders = [
     "basic_wire_entity_connection",
     "hello_world",
     "hoverbike",
+    "prop_voxel_builder",
 ]
