@@ -9,11 +9,36 @@ local DAMPING = 1.5
 
 local BASE_GRAVITY = 9.01352
 
-local counter = 0
-local log_delay = 60
+local function getGravityCompensationForce(mass)
+    return Vector(0, 0, mass * BASE_GRAVITY)
+end
+
+local function getSpringForce(tr, pos, mass)
+    if tr.Hit then
+        local height = pos.z - tr.HitPos.z
+        
+        local error = TARGET_HEIGHT - height
+        
+        return Vector(0, 0, error * SPRING * mass)
+    else
+        return Vector()
+    end
+end
+
+local function getDampingForce(velZ, mass)
+    return Vector(0, 0, -velZ * DAMPING * mass)
+end
+
+local function shouldApplyTotalForce(tr, velZ, maxEntVelZ)
+    return tr.Hit and (math.abs(velZ) <= maxEntVelZ)
+end
+
+local function applyTotalForce(ent, gravityCompensationForce, springForce, dampingForce)
+    local force = gravityCompensationForce + springForce + dampingForce
+    ent:applyForceCenter(force)
+end
 
 hook.add("think", "hover", function()
-
     local ent = chip()
 
     local pos = ent:getPos()
@@ -25,44 +50,13 @@ hook.add("think", "hover", function()
         pos - Vector(0, 0, TARGET_HEIGHT * 4)
     )
 
-    local springForce = Vector()
-
-    if tr.Hit then
-
-        local height =
-            pos.z - tr.HitPos.z
-
-        local error =
-            TARGET_HEIGHT - height
-
-        springForce =
-            Vector(0, 0, error * SPRING * mass)
-
-        if (counter % log_delay) == 0 then
-            print(
-                string.format(
-                    "[Hoverbike] height=%.2f error=%.2f vz=%.2f",
-                    height,
-                    error,
-                    vel.z
-                )
-            )
-        end
-    end
-
-    local gravityCompensation = Vector(0, 0, mass * BASE_GRAVITY)
-
-    local dampingForce =
-        Vector(0, 0, -vel.z * DAMPING * mass)
-
-    if tr.Hit then
-        ent:applyForceCenter(
-            gravityCompensation
-            + springForce
-            + dampingForce
+    if shouldApplyTotalForce(tr, vel.z, 500) then
+        applyTotalForce(
+            ent,
+            getGravityCompensationForce(mass),
+            getSpringForce(tr, pos, mass),
+            getDampingForce(vel.z, mass)
         )
     end
-
-    counter = counter + 1
 
 end)
