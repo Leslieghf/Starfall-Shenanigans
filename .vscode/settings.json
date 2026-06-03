@@ -29,7 +29,8 @@
         "/**/"
     ],
     "Lua.diagnostics.disable": [
-        "duplicate-set-field"
+        "duplicate-set-field",
+        "empty-block"
     ],
     "Lua.workspace.checkThirdParty": false
 }

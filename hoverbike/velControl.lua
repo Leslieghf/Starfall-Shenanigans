@@ -1,7 +1,9 @@
 --@include utils.lua
+--@include propControl.lua
 --@include rigidbodyControl.lua
 
 local Utils = require("utils.lua")
+local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 
 local VelControl = {}
@@ -12,7 +14,7 @@ VelControl.DAMPING = 1.5
 function VelControl.getGravityCompensationForce(height, velZ, mass)
     if height > Utils.TARGET_HEIGHT then return Vector() end
     
-    local influence = Utils.getInfluence(height, velZ)
+    local influence = PropControl.getInfluence(height, velZ)
     
     return Vector(0, 0, Utils.BASE_GRAVITY * influence * mass)
 end
@@ -28,7 +30,7 @@ end
 function VelControl.getDampingForce(height, velZ, mass)
     if velZ >= 0 then return Vector() end
 
-    local influence = Utils.getInfluence(height, velZ)
+    local influence = PropControl.getInfluence(height, velZ)
 
     return Vector(0, 0, -velZ * VelControl.DAMPING * influence * mass)
 end
