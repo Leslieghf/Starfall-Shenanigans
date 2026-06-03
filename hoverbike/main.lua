@@ -3,11 +3,25 @@
 --@model models/hunter/plates/plate1x2.mdl
 
 local TARGET_HEIGHT = 100
+local MAX_HOVER_FORCE_INFLUENCE_HEIGHT = 200
+local MAX_VELOCITY_Z = 500 -- Misleading name; this does NOT mean that 500 is the fastest the hoverbike can move!
 
 local SPRING = 5
 local DAMPING = 1.5
 
 local BASE_GRAVITY = 9.01352
+
+local function isNotChip(ent)
+    return ent ~= chip()
+end
+
+local function getHeightTrace(pos)
+    return trace.trace(
+        pos,
+        pos - Vector(0, 0, TARGET_HEIGHT * 4),
+        isNotChip
+    )
+end
 
 local function getGravityCompensationForce(tr, pos, mass)
     local height = pos.z - tr.HitPos.z
@@ -37,17 +51,13 @@ local function getDampingForce(tr, pos, velZ, mass)
     return Vector(0, 0, -velZ * DAMPING * mass)
 end
 
-local function shouldApplyTotalForce(tr, velZ, maxEntVelZ)
-    return tr.Hit and (math.abs(velZ) <= maxEntVelZ)
+local function shouldApplyTotalForce(tr, velZ)
+    return tr.Hit and (math.abs(velZ) <= MAX_VELOCITY_Z)
 end
 
 local function applyTotalForce(ent, gravityCompensationForce, springForce, dampingForce)
     local force = gravityCompensationForce + springForce + dampingForce
     ent:applyForceCenter(force)
-end
-
-local function isNotChip(ent)
-    return ent ~= chip()
 end
 
 hook.add("think", "hover", function()
@@ -57,13 +67,9 @@ hook.add("think", "hover", function()
     local vel = ent:getVelocity()
     local mass = ent:getMass()
 
-    local tr = trace.trace(
-        pos,
-        pos - Vector(0, 0, TARGET_HEIGHT * 4),
-        isNotChip
-    )
+    local tr = getHeightTrace(pos)
 
-    if shouldApplyTotalForce(tr, vel.z, 500) then
+    if shouldApplyTotalForce(tr, vel.z) then
         applyTotalForce(
             ent,
             getGravityCompensationForce(tr, pos, mass),
