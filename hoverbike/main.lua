@@ -9,6 +9,7 @@ local LOOKAHEAD_TIME = 0.5
 local SPRING = 1.9
 local DAMPING = 1.5
 local DAMPING_FALLOFF_HEIGHT = TARGET_HEIGHT * 2
+local ROTATIONAL_DAMPING = 1.5
 
 local BASE_GRAVITY = 9.01352
 
@@ -67,6 +68,19 @@ local function getDampingForce(height, velZ, mass)
     return Vector(0, 0, -velZ * DAMPING * influence * mass)
 end
 
+local function getRotationalDampingTorque(ent)
+
+    local angVel = ent:getAngleVelocity()
+    local inertia = ent:getInertia()
+
+    return Vector(
+        -angVel.x * inertia.x,
+        -angVel.y * inertia.y,
+        -angVel.z * inertia.z
+    ) * ROTATIONAL_DAMPING
+
+end
+
 local function shouldApplyTotalForce(tr, velZ)
     return tr.Hit
 end
@@ -74,6 +88,11 @@ end
 local function applyTotalForce(ent, gravityCompensationForce, springForce, dampingForce)
     local force = gravityCompensationForce + springForce + dampingForce
     ent:applyForceCenter(force)
+end
+
+local function applyTotalTorque(ent, dampingTorque)
+    local torque = dampingTorque
+    ent:applyTorque(torque)
 end
 
 hook.add("think", "hover", function()
@@ -92,5 +111,9 @@ hook.add("think", "hover", function()
             getDampingForce(height, vel.z, mass)
         )
     end
-
+    
+    applyTotalTorque(
+        ent,
+        getRotationalDampingTorque(ent)
+    )
 end)
