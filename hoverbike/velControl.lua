@@ -1,6 +1,8 @@
 --@include utils.lua
+--@include rigidbodyControl.lua
 
 local Utils = require("utils.lua")
+local RigidbodyControl = require("rigidbodyControl.lua")
 
 local VelControl = {}
 
@@ -31,12 +33,16 @@ function VelControl.getDampingForce(height, velZ, mass)
     return Vector(0, 0, -velZ * VelControl.DAMPING * influence * mass)
 end
 
-function VelControl.applyTotalForce(ent, gravityCompensationForce, springForce, dampingForce)
+function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, springForce, dampingForce)
     local force = gravityCompensationForce + springForce + dampingForce
-    ent:applyForceCenter(force)
+    local comPos = RigidbodyControl.getCenterOfMass(ent, propsRegistry)
+    local chipPos = ent:getPos()
+    local offset = comPos - chipPos
+    
+    ent:applyForceOffset(force, offset)
 end
 
-function VelControl.shouldApplyTotalForce(tr, velZ)
+function VelControl.shouldApplyForce(tr, velZ)
     return tr.Hit
 end
 

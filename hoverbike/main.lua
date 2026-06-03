@@ -2,40 +2,36 @@
 --@server
 --@model models/hunter/plates/plate1x2.mdl
 --@include utils.lua
+--@include propControl.lua
+--@include rigidbodyControl.lua
 --@include velControl.lua
 --@include angVelControl.lua
 
 local Utils = require("utils.lua")
+local PropControl = require("propControl.lua")
+local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
 local AngVelControl = require("angVelControl.lua")
 
-local Props = {}
-
 local function startup()
-    local ent = chip()
-    local pos = ent:getPos()
-    local ang = ent:getAngles()
-    local model = "models/props_phx/carseat3.mdl"
-    local frozen = true
-
-    Props.seat = prop.createSeat(pos + Vector(0, 0, 11), ang, model, frozen)
-    constraint.weld(Props.seat, ent)
+    PropControl.startup()
 end
 
 local function update()
     local ent = chip()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
-    local mass = ent:getMass()
+    local totalMass = RigidbodyControl.getMass(PropControl.Registry)
     local tr = Utils.getHeightTrace(pos)
     local height = Utils.getHeight(tr, pos)
 
-    if VelControl.shouldApplyTotalForce(tr, vel.z) then
-        VelControl.applyTotalForce(
+    if VelControl.shouldApplyForce(tr, vel.z) then
+        VelControl.applyForce(
             ent,
-            VelControl.getGravityCompensationForce(height, vel.z, mass),
-            VelControl.getSpringForce(height, vel.z, mass),
-            VelControl.getDampingForce(height, vel.z, mass)
+            PropControl.Registry,
+            VelControl.getGravityCompensationForce(height, vel.z, totalMass),
+            VelControl.getSpringForce(height, vel.z, totalMass),
+            VelControl.getDampingForce(height, vel.z, totalMass)
         )
     end
     
