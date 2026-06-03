@@ -3,11 +3,12 @@
 --@model models/hunter/plates/plate1x2.mdl
 
 local TARGET_HEIGHT = 100
-local MAX_HOVER_FORCE_INFLUENCE_HEIGHT = 200
-local MAX_VELOCITY_Z = 500 -- Misleading name; this does NOT mean that 500 is the fastest the hoverbike can move!
+local INFLUENCE_FALLOFF_EXPONENT = 4
+local LOOKAHEAD_TIME = 0.5
 
-local SPRING = 5
+local SPRING = 1.9
 local DAMPING = 1.5
+local DAMPING_FALLOFF_HEIGHT = TARGET_HEIGHT * 2
 
 local BASE_GRAVITY = 9.01352
 
@@ -23,19 +24,34 @@ local function getHeightTrace(pos)
     )
 end
 
-local function getGravityCompensationForce(tr, pos, mass)
-    local height = pos.z - tr.HitPos.z
-    
-    if height > TARGET_HEIGHT then return Vector() end
-    
-    return Vector(0, 0, mass * BASE_GRAVITY)
+local function getHeight(tr, pos)
+    return pos.z - tr.HitPos.z
 end
 
-local function getSpringForce(tr, pos, velZ, mass)
-    if !tr.Hit then return Vector() end
+local function getTimeToTarget(height, velZ)
+    if velZ >= 0 then return math.huge end
 
-    local height = pos.z - tr.HitPos.z
+    local distanceToTarget = math.max(height - TARGET_HEIGHT, 0)
 
+    return distanceToTarget / math.max(-velZ, 1)
+end
+
+local function getInfluence(height, velZ)
+    local timeToTarget = getTimeToTarget(height, velZ)
+    local t = math.clamp(timeToTarget / LOOKAHEAD_TIME, 0, 1)
+
+    return (1 - t)^INFLUENCE_FALLOFF_EXPONENT
+end
+
+local function getGravityCompensationForce(height, velZ, mass)
+    if height > TARGET_HEIGHT then return Vector() end
+    
+    local influence = getInfluence(height, velZ)
+    
+    return Vector(0, 0, BASE_GRAVITY * influence * mass)
+end
+
+local function getSpringForce(height, velZ, mass)
     if height >= TARGET_HEIGHT then return Vector() end
 
     local error = TARGET_HEIGHT - height
@@ -43,16 +59,16 @@ local function getSpringForce(tr, pos, velZ, mass)
     return Vector(0, 0, error * SPRING * mass)
 end
 
-local function getDampingForce(tr, pos, velZ, mass)
-    local height = pos.z - tr.HitPos.z
-    
-    if height > TARGET_HEIGHT then return Vector() end
-    
-    return Vector(0, 0, -velZ * DAMPING * mass)
+local function getDampingForce(height, velZ, mass)
+    if velZ >= 0 then return Vector() end
+
+    local influence = getInfluence(height, velZ)
+
+    return Vector(0, 0, -velZ * DAMPING * influence * mass)
 end
 
 local function shouldApplyTotalForce(tr, velZ)
-    return tr.Hit and (math.abs(velZ) <= MAX_VELOCITY_Z)
+    return tr.Hit
 end
 
 local function applyTotalForce(ent, gravityCompensationForce, springForce, dampingForce)
@@ -62,19 +78,18 @@ end
 
 hook.add("think", "hover", function()
     local ent = chip()
-
     local pos = ent:getPos()
     local vel = ent:getVelocity()
     local mass = ent:getMass()
-
     local tr = getHeightTrace(pos)
+    local height = getHeight(tr, pos)
 
     if shouldApplyTotalForce(tr, vel.z) then
         applyTotalForce(
             ent,
-            getGravityCompensationForce(tr, pos, mass),
-            getSpringForce(tr, pos, vel.z, mass),
-            getDampingForce(tr, pos, vel.z, mass)
+            getGravityCompensationForce(height, vel.z, mass),
+            getSpringForce(height, vel.z, mass),
+            getDampingForce(height, vel.z, mass)
         )
     end
 
