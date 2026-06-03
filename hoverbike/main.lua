@@ -9,7 +9,7 @@ local LOOKAHEAD_TIME = 0.5
 local SPRING = 1.9
 local DAMPING = 1.5
 local DAMPING_FALLOFF_HEIGHT = TARGET_HEIGHT * 2
-local ROTATIONAL_DAMPING = 1.5
+local ROTATIONAL_DAMPING = 0.01
 
 local BASE_GRAVITY = 9.01352
 
@@ -112,8 +112,5 @@ hook.add("think", "hover", function()
         )
     end
     
-    applyTotalTorque(
-        ent,
-        getRotationalDampingTorque(ent)
-    )
+    -- applyTotalTorque(ent, getRotationalDampingTorque(ent))
 end)
