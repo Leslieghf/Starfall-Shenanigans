@@ -20,6 +20,7 @@ local function update()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
+    print("total mass: " .. totalMass)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
 

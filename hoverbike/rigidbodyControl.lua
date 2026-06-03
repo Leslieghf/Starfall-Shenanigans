@@ -3,7 +3,7 @@ local RigidbodyControl = {}
 function RigidbodyControl.getMass(propsRegistry)
     local totalMass = 0
 
-    for _, prop in ipairs(propsRegistry) do
+    for _, prop in pairs(propsRegistry) do
         totalMass = totalMass + prop.ent:getMass()
     end
 
@@ -14,7 +14,7 @@ function RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
     local totalMass = 0
     local weightedPos = Vector()
     
-    for _, data in ipairs(propsRegistry) do
+    for _, data in pairs(propsRegistry) do
         local mass = data.mass
         local pos = data.ent:getPos()
         totalMass = totalMass + mass

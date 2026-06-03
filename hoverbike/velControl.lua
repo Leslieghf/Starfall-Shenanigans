@@ -41,7 +41,7 @@ function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, spr
     local chipPos = ent:getPos()
     local offset = comPos - chipPos
     
-    print("Applying force '" .. tostring(force) .. "' with offset '" .. tostring(offset) .. "'.")
+    -- print("Applying force '" .. tostring(force) .. "' with offset '" .. tostring(offset) .. "'.")
     
     ent:applyForceOffset(force, offset)
 end
