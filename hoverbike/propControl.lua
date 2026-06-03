@@ -16,6 +16,7 @@ function PropControl.startup()
     local seat = prop.createSeat(pos + Vector(0, 0, 11), ang, model, frozen)
     constraint.weld(seat, ent)
     
+    PropControl.addPropToRegistry(ent, "chip")
     PropControl.addPropToRegistry(seat, "seat")
 end
 
