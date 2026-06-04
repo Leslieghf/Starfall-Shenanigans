@@ -1,0 +1,5 @@
+{
+  "workspace.library": [
+    "${addons}/starfallex/module/library"
+  ]
+}

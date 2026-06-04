@@ -13,6 +13,7 @@ end
 function AngVelControl.applyTotalTorque(ent, propsRegistry)
     local torque = AngVelControl.getRotationalDampingTorque(propsRegistry)
     ent:applyTorque(torque)
+    return torque
 end
 
 return AngVelControl

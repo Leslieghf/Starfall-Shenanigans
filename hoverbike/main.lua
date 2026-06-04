@@ -5,11 +5,13 @@
 --@include rigidbodyControl.lua
 --@include velControl.lua
 --@include angVelControl.lua
+--@include debugVisualizer.lua
 
 local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
 local AngVelControl = require("angVelControl.lua")
+local DebugVisualizer = require("debugVisualizer.lua")
 
 local function startup()
     PropControl.startup()
@@ -34,6 +36,8 @@ local function update()
     end
     
     AngVelControl.applyTotalTorque(ent, PropControl.Registry)
+    
+    DebugVisualizer.update()
 end
 
 hook.add("Think", "update", function()
@@ -43,4 +47,10 @@ hook.add("Think", "update", function()
     end
     
     update()
+end)
+
+hook.add("EntityRemoved", "HoverbikeCleaning", function(ent)
+    if ent == chip() then
+        DebugVisualizer.cleanup()
+    end
 end)

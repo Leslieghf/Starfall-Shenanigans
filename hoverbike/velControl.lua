@@ -40,6 +40,7 @@ function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, spr
     local comPos = RigidbodyControl.getCenterOfMass(ent, propsRegistry)
     
     ent:applyForceOffset(force, comPos)
+    return force, comPos
 end
 
 function VelControl.shouldApplyForce(tr, velZ)
