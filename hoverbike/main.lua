@@ -33,7 +33,7 @@ local function update()
         )
     end
     
-    AngVelControl.applyTotalTorque(ent)
+    AngVelControl.applyTotalTorque(ent, PropControl.Registry)
 end
 
 hook.add("Think", "update", function()
