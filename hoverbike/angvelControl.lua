@@ -3,19 +3,18 @@
 local Utils = require("utils.lua")
 
 local AngVelControl = {}
-
-AngVelControl.ROTATIONAL_DAMPING = 0.1
+AngVelControl.DAMPING_FACTOR = 0.01
 
 function AngVelControl.getRotationalDampingTorque(ent)
     local angVel = ent:getAngleVelocity()
     local inertia = ent:getInertia()
-    local timeStep = timer.frametime()
-    return -AngVelControl.ROTATIONAL_DAMPING * ((inertia * angVel) / timeStep)
+
+    return inertia * angVel * -AngVelControl.DAMPING_FACTOR
 end
 
-
-function AngVelControl.applyTotalTorque(ent, dampingTorque)
-    local torque = dampingTorque
+function AngVelControl.applyTotalTorque(ent)
+    local torque = AngVelControl.getRotationalDampingTorque(ent)
+    Utils.debugPrint("Applying torque: '" .. tostring(torque) .. "'.")
     ent:applyTorque(torque)
 end
 
