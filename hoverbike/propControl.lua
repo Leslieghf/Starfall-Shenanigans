@@ -7,16 +7,18 @@ local PropControl = {}
 PropControl.Registry = {}
 
 function PropControl.startup()
-    local ent = chip()
-    local pos = ent:getPos()
-    local ang = ent:getAngles()
-    local model = "models/props_phx/carseat3.mdl"
-    local frozen = true
+    -- Chip
+    local chip = chip()
+    PropControl.addPropToRegistry(chip, "chip")
 
-    local seat = prop.createSeat(pos + Vector(0, 0, 11), ang, model, frozen)
-    constraint.weld(seat, ent)
-    
-    PropControl.addPropToRegistry(ent, "chip")
+    -- Seat
+    local seatPos = chip:getPos() + Vector(0, 0, 11)
+    local seatAng = chip:getAngles()
+    local seatModel = "models/props_phx/carseat3.mdl"
+    local seatFrozen = true
+    local seat = prop.createSeat(seatPos, seatAng, seatModel, seatFrozen)
+    constraint.weld(seat, chip)
+    constraint.keepupright(seat, Angle(90, 0, 0), 0, 0)
     PropControl.addPropToRegistry(seat, "seat")
 end
 

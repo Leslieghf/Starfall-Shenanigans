@@ -6,4 +6,9 @@ Utils.TARGET_HEIGHT = 100
 Utils.INFLUENCE_FALLOFF_EXPONENT = 4
 Utils.LOOKAHEAD_TIME = 0.5
 
+function Utils.formatVec(v, precision)
+    local fmt = string.format("(%%.%df, %%.%df, %%.%df)", precision, precision, precision)
+    return string.format(fmt, v.x, v.y, v.z)
+end
+
 return Utils
