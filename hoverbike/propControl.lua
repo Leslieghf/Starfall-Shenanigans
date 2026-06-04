@@ -23,7 +23,7 @@ function PropControl.startup()
 end
 
 function PropControl.addPropToRegistry(ent, name)
-    PropControl.Registry[name] = {ent = ent, mass = ent:getMass()}
+    PropControl.Registry[name] = {ent = ent}
 end
 
 function PropControl.isIgnoredProp(ent)
