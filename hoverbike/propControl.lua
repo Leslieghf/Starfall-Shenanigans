@@ -24,7 +24,6 @@ end
 
 function PropControl.addPropToRegistry(ent, name)
     PropControl.Registry[name] = {ent = ent, mass = ent:getMass()}
-    -- print("Added prop '" .. name .. "' to registry with a mass of " .. ent:getMass())
 end
 
 function PropControl.isIgnoredProp(ent)

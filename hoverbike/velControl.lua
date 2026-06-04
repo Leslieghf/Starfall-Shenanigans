@@ -38,12 +38,9 @@ end
 function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, springForce, dampingForce)
     local force = gravityCompensationForce + springForce + dampingForce
     local comPos = RigidbodyControl.getCenterOfMass(ent, propsRegistry)
-    local chipPos = ent:getPos()
-    local offset = comPos - chipPos
     
-    -- print("Applying force '" .. tostring(force) .. "' with offset '" .. tostring(offset) .. "'.")
-    
-    ent:applyForceOffset(force, offset)
+    -- applyForceOffset expects a world position, not a relative offset.
+    ent:applyForceOffset(force, comPos)
 end
 
 function VelControl.shouldApplyForce(tr, velZ)

@@ -1,13 +1,11 @@
 --@name Hoverbike
 --@server
 --@model models/hunter/plates/plate1x2.mdl
---@include utils.lua
 --@include propControl.lua
 --@include rigidbodyControl.lua
 --@include velControl.lua
 --@include angVelControl.lua
 
-local Utils = require("utils.lua")
 local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
@@ -22,8 +20,6 @@ local function update()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
-    -- local centerOfMass = RigidbodyControl.getCenterOfMass(ent, PropControl.Registry)
-    -- print("total mass: '" .. totalMass .. "', center of mass: '" .. Utils.formatVec(centerOfMass, 2) .. "'.")
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
 
