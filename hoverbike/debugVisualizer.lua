@@ -10,20 +10,20 @@ local DebugVisualizer = {
     enabled = true,
 
     parts = {
-        -- Corrects model-specific mismatch between reported bounds and the visible base.
         shaft = {
             model = "models/xqm/cylinderx1.mdl",
             forwardAxis = "x",
-            length = 10,
+            length = 500,
             radius = 0.075,
-            visualBaseOffset = 0
+            clipEndpoints = true,
+            clipPaddingFactor = 0.25
         },
         head = {
             model = "models/hunter/misc/cone2x2.mdl",
             forwardAxis = "z",
             scale = 0.025,
             gap = 0,
-            visualBaseOffset = 4
+            contactInset = 0
         }
     },
 

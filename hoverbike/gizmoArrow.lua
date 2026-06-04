@@ -57,30 +57,103 @@ local function dirFor(axisName)
     return Vector(0, 0, sign)
 end
 
+local function readBounds(ent)
+    for _, methodName in ipairs({ "getModelBounds" }) do
+        local method = ent[methodName]
+        if method then
+            local ok, mins, maxs = pcall(function()
+                return method(ent)
+            end)
+
+            if ok and mins and maxs then return mins, maxs end
+        end
+    end
+
+    return ent:obbMins(), ent:obbMaxs()
+end
+
 local function boundsFor(model)
     if modelBounds[model] then return modelBounds[model] end
 
     local probe = hologram.create(Vector(), Angle(), model, Vector(1, 1, 1))
-    local mins, maxs = probe:obbMins(), probe:obbMaxs()
-    modelBounds[model] = { mins = mins, maxs = maxs, size = maxs - mins }
+    local mins, maxs = readBounds(probe)
+    modelBounds[model] = {
+        mins = mins,
+        maxs = maxs,
+        center = (mins + maxs) * 0.5,
+        size = maxs - mins
+    }
 
     remove(probe)
     return modelBounds[model]
 end
 
-local function scaleFor(part, bounds)
-    if not part.length then
-        local scale = part.scale or 1
-        return Vector(scale, scale, scale)
+local function forwardPoint(part, bounds, t)
+    local axis, sign = axisInfo(part.forwardAxis)
+    local point = (bounds.mins + bounds.maxs) * 0.5
+    local min = component(bounds.mins, axis)
+    local max = component(bounds.maxs, axis)
+    local value = sign > 0 and min + (max - min) * t or max - (max - min) * t
+
+    if axis == "x" then
+        point.x = value
+    elseif axis == "y" then
+        point.y = value
+    else
+        point.z = value
     end
 
+    return point
+end
+
+local function forwardSpan(part, bounds)
     local axis = axisInfo(part.forwardAxis)
-    local along = part.length / math.max(component(bounds.size, axis), 0.001)
+    return math.abs(component(bounds.size, axis))
+end
+
+local function scaleForLength(part, bounds, length)
+    local axis = axisInfo(part.forwardAxis)
+    local along = length / math.max(forwardSpan(part, bounds), 0.001)
     local side = part.radius or 1
 
     if axis == "x" then return Vector(along, side, side) end
     if axis == "y" then return Vector(side, along, side) end
     return Vector(side, side, along)
+end
+
+local function scaleFor(part, bounds)
+    if part.length then
+        return scaleForLength(part, bounds, part.length)
+    end
+
+    local scale = part.scale or 1
+    return Vector(scale, scale, scale)
+end
+
+local function lengthFor(part, bounds, scale)
+    if part.length then
+        return part.length
+    end
+
+    local axis = axisInfo(part.forwardAxis)
+    return math.abs(forwardSpan(part, bounds) * component(scale, axis))
+end
+
+local function clipPadding(part, length)
+    if not part.clipEndpoints then return 0 end
+
+    return length * (part.clipPaddingFactor or 0.25)
+end
+
+local function setShaftClips(holo, enabled, startPos, endPos, dir)
+    if not enabled then
+        holo:setClip(1, false)
+        holo:setClip(2, false)
+        return
+    end
+
+    holo:setClip(1, true, startPos, dir)
+    holo:setClip(2, true, endPos, dir * -1)
 end
 
 local function angleFor(part, worldAxis)
@@ -95,37 +168,24 @@ local function angleFor(part, worldAxis)
     return angle
 end
 
-local function basePoint(part, bounds)
-    local axis, sign = axisInfo(part.forwardAxis)
-    local edge = sign > 0 and bounds.mins or bounds.maxs
-    local point = (bounds.mins + bounds.maxs) * 0.5
-
-    if axis == "x" then
-        point.x = edge.x
-    elseif axis == "y" then
-        point.y = edge.y
-    else
-        point.z = edge.z
-    end
-
-    return point
-end
-
 local function partState(part, worldAxis)
     local bounds = boundsFor(part.model)
     local scale = scaleFor(part, bounds)
     local angle = angleFor(part, worldAxis)
-    local axis = axisInfo(part.forwardAxis)
+    local length = lengthFor(part, bounds, scale)
 
-    return bounds, scale, angle, math.abs(component(bounds.size, axis) * component(scale, axis))
+    return bounds, scale, angle, length
 end
 
-local function positionAtBase(anchor, part, bounds, scale, angle, dir)
-    local base = basePoint(part, bounds)
-    local offset = Vector(base.x * scale.x, base.y * scale.y, base.z * scale.z)
+local function scaledOffset(point, scale, angle)
+    local offset = Vector(point.x * scale.x, point.y * scale.y, point.z * scale.z)
     offset:rotate(angle)
+    return offset
+end
 
-    return anchor - offset - dir * (part.visualBaseOffset or 0)
+local function positionAtBase(anchor, part, bounds, scale, angle, dir, contactInset)
+    local offset = scaledOffset(forwardPoint(part, bounds, 0), scale, angle)
+    return anchor - offset - dir * (contactInset or 0)
 end
 
 local function ensureHolo(owner, key, model)
@@ -173,21 +233,34 @@ local function updateArrow(gizmo, axis, origin)
     local dir = dirFor(axis.axis)
     local shaft = gizmo.parts.shaft
     local head = gizmo.parts.head
-    local shaftBounds, shaftScale, shaftAngle, shaftLength = partState(shaft, axis.axis)
+    local shaftBounds, _, shaftAngle, shaftLength = partState(shaft, axis.axis)
     local headBounds, headScale, headAngle = partState(head, axis.axis)
-    local headBase = origin + dir * (shaftLength + (head.gap or 0))
+    local shaftEnd = origin + dir * shaftLength
+    local headBase = shaftEnd + dir * (head.gap or 0)
+    local shaftPadding = clipPadding(shaft, shaftLength)
+    local shaftRenderScale = scaleForLength(shaft, shaftBounds, shaftLength + shaftPadding * 2)
+    local shaftHolo = ensureHolo(axis, "shaft", shaft.model)
 
     place(
-        ensureHolo(axis, "shaft", shaft.model),
-        positionAtBase(origin, shaft, shaftBounds, shaftScale, shaftAngle, dir),
+        shaftHolo,
+        positionAtBase(
+            origin - dir * shaftPadding,
+            shaft,
+            shaftBounds,
+            shaftRenderScale,
+            shaftAngle,
+            dir,
+            0
+        ),
         shaftAngle,
-        shaftScale,
+        shaftRenderScale,
         axis.color
     )
+    setShaftClips(shaftHolo, shaft.clipEndpoints, origin, shaftEnd, dir)
 
     place(
         ensureHolo(axis, "head", head.model),
-        positionAtBase(headBase, head, headBounds, headScale, headAngle, dir),
+        positionAtBase(headBase, head, headBounds, headScale, headAngle, dir, head.contactInset),
         headAngle,
         headScale,
         axis.color

@@ -5,6 +5,7 @@
 --@include rigidbodyControl.lua
 --@include velControl.lua
 --@include angVelControl.lua
+--@include gizmoArrow.lua
 --@include debugVisualizer.lua
 
 local PropControl = require("propControl.lua")
