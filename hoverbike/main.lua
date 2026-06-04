@@ -33,7 +33,7 @@ local function update()
         )
     end
     
-    -- AngVelControl.applyTotalTorque(ent, getRotationalDampingTorque(ent))
+    AngVelControl.applyTotalTorque(ent, AngVelControl.getRotationalDampingTorque(ent))
 end
 
 hook.add("Think", "update", function()

@@ -39,7 +39,6 @@ function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, spr
     local force = gravityCompensationForce + springForce + dampingForce
     local comPos = RigidbodyControl.getCenterOfMass(ent, propsRegistry)
     
-    -- applyForceOffset expects a world position, not a relative offset.
     ent:applyForceOffset(force, comPos)
 end
 
