@@ -1,4 +1,7 @@
 - LinArrow jitters at TARGET_HEIGHT; could test by printing whether we are over, under, or exactly on the TARGET_HEIGHT.
 - Vertical Movement works as intended, but the intentions are stupid
 - Everything feels sluggish
-- We have no way to reliably and easily apply additional control/corrective/additive/whatever forces without generating a torque, yk? Maybe the problem is that we are forcing with the offset set to the COM, but with the target still jsut being one entity, when we might want to proportionally and individually distribute the forces among all props, yk?
+- It is highly suspicious that we are applying the force with the COM as an offset, but we are applying it *to* only the chip entity. I do feel like proportionally sharing the required force between props makes more sense? But maybe it's computationally more expensive?
+- Mass independence would be cool, aka the hoverbike could always experience the same trajectory profile and general feel while being free to add props with whatever weight willy-nilly.
+- It would also be cool if Players and other Props that are standing/lying on top of the hoverbike would not push it down, but just tank it like a chad like it ain't nothing, but idk how we'll implement that level of dynamism.
+- Add proper sounds and visuals and cool ass effects dude
