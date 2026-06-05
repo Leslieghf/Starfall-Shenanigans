@@ -1,0 +1,4 @@
+- LinArrow jitters at TARGET_HEIGHT; could test by printing whether we are over, under, or exactly on the TARGET_HEIGHT.
+- Vertical Movement works as intended, but the intentions are stupid
+- Everything feels sluggish
+- We have no way to reliably and easily apply additional control/corrective/additive/whatever forces without generating a torque, yk? Maybe the problem is that we are forcing with the offset set to the COM, but with the target still jsut being one entity, when we might want to proportionally and individually distribute the forces among all props, yk?
