@@ -1,16 +1,19 @@
 local AngVelControl = {}
 AngVelControl.UPRIGHT_FACTOR = 150.0
-AngVelControl.UPRIGHT_DAMPING_RATIO = 0.9
-AngVelControl.UPRIGHT_INTEGRAL_FACTOR = 150.0
-AngVelControl.UPRIGHT_INTEGRAL_LIMIT = 5.0
+AngVelControl.UPRIGHT_DAMPING_RATIO = 1.25
+AngVelControl.UPRIGHT_INTEGRAL_FACTOR = 20.0
+AngVelControl.UPRIGHT_INTEGRAL_LIMIT = 0.35
+AngVelControl.UPRIGHT_INTEGRAL_DECAY = 0.75
 AngVelControl.UPRIGHT_INTEGRAL_MAX_DT = 0.05
-AngVelControl.ERROR_DEADZONE = 0.001
-AngVelControl.ANGVEL_DEADZONE = 0.001
+AngVelControl.ERROR_DEADZONE = 0.003
+AngVelControl.ANGVEL_DEADZONE = 0.1
 AngVelControl.TARGET_UP = Vector(0, 0, 1)
 AngVelControl.UprightIntegral = Vector()
 AngVelControl.LastUpdateAt = nil
+AngVelControl.LastTorqueAt = nil
 
 local LOCAL_UP = Vector(0, 0, 1)
+local RAD_TO_DEG = 180 / math.pi
 
 local function localVectorToWorld(ent, vec)
     return ent:localToWorld(vec) - ent:getPos()
@@ -32,6 +35,12 @@ local function dot(a, b)
     return a.x * b.x + a.y * b.y + a.z * b.z
 end
 
+local function clamped(value, min, max)
+    if value < min then return min end
+    if value > max then return max end
+    return value
+end
+
 local function clampedMagnitude(vec, limit)
     local length = magnitude(vec)
     if length <= limit then return vec end
@@ -47,16 +56,18 @@ local function uprightDampingFactor()
 end
 
 function AngVelControl.getUprightErrorAxis(ent, targetUp)
-    local currentUp = localVectorToWorld(ent, LOCAL_UP)
+    local currentUp = normalized(localVectorToWorld(ent, LOCAL_UP))
     local normalizedTargetUp = normalized(targetUp)
     local errorAxis = currentUp:cross(normalizedTargetUp)
+    local errorLength = magnitude(errorAxis)
+    local alignment = clamped(dot(currentUp, normalizedTargetUp), -1, 1)
 
-    if magnitude(errorAxis) > 0.0001 then
-        return errorAxis
+    if errorLength > 0.0001 then
+        return errorAxis / errorLength * math.acos(alignment)
     end
 
-    if dot(currentUp, normalizedTargetUp) < 0 then
-        return localVectorToWorld(ent, Vector(1, 0, 0))
+    if alignment < 0 then
+        return localVectorToWorld(ent, Vector(1, 0, 0)) * math.pi
     end
 
     return Vector()
@@ -67,8 +78,9 @@ local function updateUprightIntegral(errorAxis)
     local dt = AngVelControl.LastUpdateAt and now - AngVelControl.LastUpdateAt or 0
     dt = math.min(dt, AngVelControl.UPRIGHT_INTEGRAL_MAX_DT)
     AngVelControl.LastUpdateAt = now
+    local decay = math.max(0, 1 - AngVelControl.UPRIGHT_INTEGRAL_DECAY * dt)
     AngVelControl.UprightIntegral = clampedMagnitude(
-        AngVelControl.UprightIntegral + errorAxis * dt,
+        AngVelControl.UprightIntegral * decay + errorAxis * dt,
         AngVelControl.UPRIGHT_INTEGRAL_LIMIT
     )
 
@@ -79,6 +91,7 @@ function AngVelControl.setTargetUp(targetUp)
     AngVelControl.TARGET_UP = normalized(targetUp)
     AngVelControl.UprightIntegral = Vector()
     AngVelControl.LastUpdateAt = nil
+    AngVelControl.LastTorqueAt = nil
 end
 
 function AngVelControl.shouldApplyTorque(ent, uprightErrorAxis)
@@ -95,22 +108,28 @@ function AngVelControl.getRotationalDampingTorque(ent, inertia)
 end
 
 function AngVelControl.getUprightSpringTorque(ent, inertia, uprightErrorAxis)
-    local localErrorAxis = worldVectorToLocal(ent, uprightErrorAxis)
+    local localErrorAxis = worldVectorToLocal(ent, uprightErrorAxis) * RAD_TO_DEG
 
     return localInertiaTorqueToWorld(ent, inertia, localErrorAxis, AngVelControl.UPRIGHT_FACTOR)
 end
 
 function AngVelControl.getUprightIntegralTorque(ent, inertia, uprightErrorAxis)
     local integralAxis = updateUprightIntegral(uprightErrorAxis)
-    local localIntegralAxis = worldVectorToLocal(ent, integralAxis)
+    local localIntegralAxis = worldVectorToLocal(ent, integralAxis) * RAD_TO_DEG
 
     return localInertiaTorqueToWorld(ent, inertia, localIntegralAxis, AngVelControl.UPRIGHT_INTEGRAL_FACTOR)
 end
 
 function AngVelControl.applyTorque(ent, springTorque, integralTorque, dampingTorque)
+    local now = timer.curtime()
+    local dt = AngVelControl.LastTorqueAt and now - AngVelControl.LastTorqueAt or 0
+    dt = math.min(dt, AngVelControl.UPRIGHT_INTEGRAL_MAX_DT)
+    AngVelControl.LastTorqueAt = now
+
     local torque = springTorque + integralTorque + dampingTorque
-    ent:applyTorque(torque)
-    return torque
+    local angularImpulse = torque * dt
+    ent:applyTorque(angularImpulse)
+    return angularImpulse
 end
 
 return AngVelControl

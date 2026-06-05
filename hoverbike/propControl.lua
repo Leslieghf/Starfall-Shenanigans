@@ -18,7 +18,7 @@ function PropControl.startup()
     local seatFrozen = true
     local seat = prop.createSeat(seatPos, seatAng, seatModel, seatFrozen)
     constraint.weld(seat, chip)
-    constraint.keepupright(seat, Angle(90, 0, 0), 0, 0)
+    -- constraint.keepupright(seat, Angle(90, 0, 0), 0, 0)
     PropControl.addPropToRegistry(seat, "seat")
 end
 
