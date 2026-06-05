@@ -1,4 +1,4 @@
-local GizmoArrow = {}
+local GizmoLinArrow = {}
 
 local ALIGN = {
     x = {
@@ -57,30 +57,36 @@ local function dirFor(axisName)
     return Vector(0, 0, sign)
 end
 
-local function readBounds(ent)
-    for _, methodName in ipairs({ "getModelBounds" }) do
-        local method = ent[methodName]
-        if method then
-            local ok, mins, maxs = pcall(function()
-                return method(ent)
-            end)
+local function signedComponent(vec, axisName)
+    if not vec then return 0 end
 
-            if ok and mins and maxs then return mins, maxs end
-        end
-    end
+    local axis, sign = axisInfo(axisName)
+    return component(vec, axis) * sign
+end
 
-    return ent:obbMins(), ent:obbMaxs()
+local function displayAxis(axisName, value)
+    if value < 0 then return flipAxis(axisName) end
+    return axisName
+end
+
+local function logScaled(base, factor, inputScale, magnitude)
+    return base + math.log(1 + magnitude * inputScale) * factor
+end
+
+local function clamped(value, min, max)
+    if min and value < min then return min end
+    if max and value > max then return max end
+    return value
 end
 
 local function boundsFor(model)
     if modelBounds[model] then return modelBounds[model] end
 
     local probe = hologram.create(Vector(), Angle(), model, Vector(1, 1, 1))
-    local mins, maxs = readBounds(probe)
+    local mins, maxs = probe:getModelBounds()
     modelBounds[model] = {
         mins = mins,
         maxs = maxs,
-        center = (mins + maxs) * 0.5,
         size = maxs - mins
     }
 
@@ -111,47 +117,28 @@ local function forwardSpan(part, bounds)
     return math.abs(component(bounds.size, axis))
 end
 
-local function scaleForLength(part, bounds, length)
+local function scaleAlongForward(part, bounds, length, crossScale)
     local axis = axisInfo(part.forwardAxis)
     local along = length / math.max(forwardSpan(part, bounds), 0.001)
-    local side = part.radius or 1
 
-    if axis == "x" then return Vector(along, side, side) end
-    if axis == "y" then return Vector(side, along, side) end
-    return Vector(side, side, along)
+    if axis == "x" then return Vector(along, crossScale, crossScale) end
+    if axis == "y" then return Vector(crossScale, along, crossScale) end
+    return Vector(crossScale, crossScale, along)
 end
 
-local function scaleFor(part, bounds)
-    if part.length then
-        return scaleForLength(part, bounds, part.length)
-    end
-
-    local scale = part.scale or 1
-    return Vector(scale, scale, scale)
+local function shaftScale(shaft, bounds, length, thickness)
+    return scaleAlongForward(shaft, bounds, length, shaft.radius * thickness)
 end
 
-local function lengthFor(part, bounds, scale)
-    if part.length then
-        return part.length
-    end
-
-    local axis = axisInfo(part.forwardAxis)
-    return math.abs(forwardSpan(part, bounds) * component(scale, axis))
+local function headScale(head, thickness)
+    return head.localScale * thickness
 end
 
 local function clipPadding(part, length)
-    if not part.clipEndpoints then return 0 end
-
-    return length * (part.clipPaddingFactor or 0.25)
+    return length * part.clipPaddingFactor
 end
 
-local function setShaftClips(holo, enabled, startPos, endPos, dir)
-    if not enabled then
-        holo:setClip(1, false)
-        holo:setClip(2, false)
-        return
-    end
-
+local function setShaftClips(holo, startPos, endPos, dir)
     holo:setClip(1, true, startPos, dir)
     holo:setClip(2, true, endPos, dir * -1)
 end
@@ -168,24 +155,15 @@ local function angleFor(part, worldAxis)
     return angle
 end
 
-local function partState(part, worldAxis)
-    local bounds = boundsFor(part.model)
-    local scale = scaleFor(part, bounds)
-    local angle = angleFor(part, worldAxis)
-    local length = lengthFor(part, bounds, scale)
-
-    return bounds, scale, angle, length
-end
-
 local function scaledOffset(point, scale, angle)
     local offset = Vector(point.x * scale.x, point.y * scale.y, point.z * scale.z)
     offset:rotate(angle)
     return offset
 end
 
-local function positionAtBase(anchor, part, bounds, scale, angle, dir, contactInset)
+local function positionAtBase(anchor, part, bounds, scale, angle)
     local offset = scaledOffset(forwardPoint(part, bounds, 0), scale, angle)
-    return anchor - offset - dir * (contactInset or 0)
+    return anchor - offset
 end
 
 local function ensureHolo(owner, key, model)
@@ -229,16 +207,29 @@ local function updateCenterMarker(gizmo, origin)
     )
 end
 
-local function updateArrow(gizmo, axis, origin)
-    local dir = dirFor(axis.axis)
+local function updateArrow(gizmo, axis, origin, input)
+    local arrow = gizmo.arrow
     local shaft = gizmo.parts.shaft
     local head = gizmo.parts.head
-    local shaftBounds, _, shaftAngle, shaftLength = partState(shaft, axis.axis)
-    local headBounds, headScale, headAngle = partState(head, axis.axis)
-    local shaftEnd = origin + dir * shaftLength
-    local headBase = shaftEnd + dir * (head.gap or 0)
-    local shaftPadding = clipPadding(shaft, shaftLength)
-    local shaftRenderScale = scaleForLength(shaft, shaftBounds, shaftLength + shaftPadding * 2)
+    local value = signedComponent(input, axis.axis)
+    local worldAxis = displayAxis(axis.axis, value)
+    local dir = dirFor(worldAxis)
+    local length = arrow.length
+    local thickness = logScaled(
+        arrow.thickness or 1,
+        arrow.thicknessLogFactor or 0,
+        arrow.inputScale or 1,
+        math.abs(value)
+    )
+    thickness = clamped(thickness, arrow.minThickness, arrow.maxThickness)
+    local shaftBounds = boundsFor(shaft.model)
+    local headBounds = boundsFor(head.model)
+    local shaftAngle = angleFor(shaft, worldAxis)
+    local headAngle = angleFor(head, worldAxis)
+    local currentHeadScale = headScale(head, thickness)
+    local shaftEnd = origin + dir * length
+    local shaftPadding = clipPadding(shaft, length)
+    local shaftRenderScale = shaftScale(shaft, shaftBounds, length + shaftPadding * 2, thickness)
     local shaftHolo = ensureHolo(axis, "shaft", shaft.model)
 
     place(
@@ -248,34 +239,32 @@ local function updateArrow(gizmo, axis, origin)
             shaft,
             shaftBounds,
             shaftRenderScale,
-            shaftAngle,
-            dir,
-            0
+            shaftAngle
         ),
         shaftAngle,
         shaftRenderScale,
         axis.color
     )
-    setShaftClips(shaftHolo, shaft.clipEndpoints, origin, shaftEnd, dir)
+    setShaftClips(shaftHolo, origin, shaftEnd, dir)
 
     place(
         ensureHolo(axis, "head", head.model),
-        positionAtBase(headBase, head, headBounds, headScale, headAngle, dir, head.contactInset),
+        positionAtBase(shaftEnd, head, headBounds, currentHeadScale, headAngle),
         headAngle,
-        headScale,
+        currentHeadScale,
         axis.color
     )
 end
 
-function GizmoArrow.update(gizmo, origin)
+function GizmoLinArrow.update(gizmo, origin, input)
     updateCenterMarker(gizmo, origin)
 
     for _, axis in ipairs(gizmo.axes) do
-        updateArrow(gizmo, axis, origin)
+        updateArrow(gizmo, axis, origin, input)
     end
 end
 
-function GizmoArrow.cleanup(gizmo)
+function GizmoLinArrow.cleanup(gizmo)
     updateCenterMarker(gizmo, nil)
 
     for _, axis in ipairs(gizmo.axes) do
@@ -288,4 +277,4 @@ function GizmoArrow.cleanup(gizmo)
     end
 end
 
-return GizmoArrow
+return GizmoLinArrow

@@ -4,14 +4,13 @@
 --@include propControl.lua
 --@include rigidbodyControl.lua
 --@include velControl.lua
---@include angVelControl.lua
---@include gizmoArrow.lua
+--@include gizmoLinArrow.lua
+--@include gizmoAngArrow.lua
 --@include debugVisualizer.lua
 
 local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
-local AngVelControl = require("angVelControl.lua")
 local DebugVisualizer = require("debugVisualizer.lua")
 
 local function startup()
@@ -22,6 +21,7 @@ local function update()
     local ent = chip()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
+    local angVel = RigidbodyControl.getAverageAngleVelocity(PropControl.Registry) or Vector()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
@@ -36,9 +36,7 @@ local function update()
         )
     end
     
-    AngVelControl.applyTotalTorque(ent, PropControl.Registry)
-    
-    DebugVisualizer.update()
+    DebugVisualizer.update(vel, angVel)
 end
 
 hook.add("Think", "update", function()
