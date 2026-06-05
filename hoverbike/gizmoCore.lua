@@ -16,24 +16,6 @@ function GizmoCore.normalized(vec, len)
     return vec / len
 end
 
-local function desaturate(value, gray, saturation)
-    return gray + (value - gray) * saturation
-end
-
-function GizmoCore.directionColor(dir, baseColor, saturation)
-    local r = math.abs(dir.x) * 255
-    local g = math.abs(dir.y) * 255
-    local b = math.abs(dir.z) * 255
-    local gray = (r + g + b) / 3
-
-    return Color(
-        math.floor(desaturate(r, gray, saturation)),
-        math.floor(desaturate(g, gray, saturation)),
-        math.floor(desaturate(b, gray, saturation)),
-        baseColor.a
-    )
-end
-
 function GizmoCore.axisInfo(axisName)
     local sign = 1
     local component = axisName
@@ -107,6 +89,21 @@ function GizmoCore.clamped(value, min, max)
     if value < min then return min end
     if value > max then return max end
     return value
+end
+
+function GizmoCore.rangeAmount(value, min, max)
+    return GizmoCore.clamped((value - min) / (max - min), 0, 1)
+end
+
+function GizmoCore.gradientColor(minColor, maxColor, amount)
+    local t = GizmoCore.clamped(amount, 0, 1)
+
+    return Color(
+        math.floor(minColor.r + (maxColor.r - minColor.r) * t),
+        math.floor(minColor.g + (maxColor.g - minColor.g) * t),
+        math.floor(minColor.b + (maxColor.b - minColor.b) * t),
+        math.floor(minColor.a + (maxColor.a - minColor.a) * t)
+    )
 end
 
 function GizmoCore.logScaled(base, factor, inputScale, inputMagnitude)

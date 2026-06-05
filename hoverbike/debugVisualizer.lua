@@ -27,8 +27,8 @@ local DebugVisualizer = {
             inputScale = 0.02,
             thicknessLogFactor = 2,
             deadzone = 0.5,
-            color = Color(255, 255, 255, 255),
-            colorByDirection = true
+            minColor = Color(0, 255, 0, 255),
+            maxColor = Color(255, 0, 0, 255)
         },
 
         centerMarker = {
@@ -42,9 +42,8 @@ local DebugVisualizer = {
     angArrow = {
         enabled = true,
         deadzone = 0.5,
-        color = Color(255, 255, 255, 204),
-        colorByDirection = true,
-        colorSaturation = 0.65,
+        minColor = Color(0, 255, 0, 204),
+        maxColor = Color(255, 0, 0, 204),
 
         ringConfig = {
             model = "models/hunter/tubes/tube4x4x025.mdl",

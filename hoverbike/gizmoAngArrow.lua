@@ -76,13 +76,24 @@ local function updateRingHead(gizmo, index, head, ringHolo, ringRadius, headScal
     end
 end
 
-local function updateRing(gizmo, origin, dir, inputMagnitude, ringFactor, color)
+local function arrowColor(gizmo, ringFactor, headFactor)
+    local ring = gizmo.ringConfig
+    local head = gizmo.head
+    local amount = math.max(
+        Core.rangeAmount(ringFactor, ring.minScaleFactor, ring.maxScaleFactor),
+        Core.rangeAmount(headFactor, head.minScaleFactor, head.maxScaleFactor)
+    )
+
+    return Core.gradientColor(gizmo.minColor, gizmo.maxColor, amount)
+end
+
+local function updateRing(gizmo, origin, dir, ringFactor, headFactor, color)
     local ring = gizmo.ringConfig
     local head = gizmo.head
     local phase = timer.curtime() * ring.spinSpeed
     local ringRadius = ring.radius * ringFactor
     local headCount = head.count
-    local headScale = head.localScale * Core.scaleFactor(head, inputMagnitude)
+    local headScale = head.localScale * headFactor
     local ringHolo = Core.ensureHolo(gizmo, "ring", ring.model)
 
     Core.place(
@@ -133,8 +144,9 @@ function GizmoAngArrow.update(gizmo, origin, input)
 
     local dir = Core.normalized(input, inputMagnitude)
     local ringFactor = Core.scaleFactor(gizmo.ringConfig, inputMagnitude)
-    local color = gizmo.colorByDirection and Core.directionColor(dir, gizmo.color, gizmo.colorSaturation) or gizmo.color
-    updateRing(gizmo, origin, dir, inputMagnitude, ringFactor, color)
+    local headFactor = Core.scaleFactor(gizmo.head, inputMagnitude)
+    local color = arrowColor(gizmo, ringFactor, headFactor)
+    updateRing(gizmo, origin, dir, ringFactor, headFactor, color)
     updateSpear(gizmo, origin, dir, ringFactor, color)
 end
 

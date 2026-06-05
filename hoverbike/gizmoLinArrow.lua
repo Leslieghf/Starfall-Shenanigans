@@ -63,6 +63,17 @@ local function arrowThickness(arrow, magnitude)
     )
 end
 
+local function arrowColor(arrow, length, thickness)
+    local baseLength = Core.clamped(arrow.length, arrow.minLength, arrow.maxLength)
+    local baseThickness = Core.clamped(arrow.thickness, arrow.minThickness, arrow.maxThickness)
+    local amount = math.max(
+        Core.rangeAmount(length, baseLength, arrow.maxLength),
+        Core.rangeAmount(thickness, baseThickness, arrow.maxThickness)
+    )
+
+    return Core.gradientColor(arrow.minColor, arrow.maxColor, amount)
+end
+
 local function updateArrow(gizmo, origin, input)
     local inputMagnitude = Core.magnitude(input)
     local arrow = gizmo.arrow
@@ -77,7 +88,7 @@ local function updateArrow(gizmo, origin, input)
     local head = DEFAULT_HEAD
     local length = arrowLength(arrow, inputMagnitude)
     local thickness = arrowThickness(arrow, inputMagnitude)
-    local color = arrow.colorByDirection and Core.directionColor(dir, arrow.color, 1) or arrow.color
+    local color = arrowColor(arrow, length, thickness)
     local headScale = head.localScale * thickness
     local shaftEnd = origin + dir * length
 
