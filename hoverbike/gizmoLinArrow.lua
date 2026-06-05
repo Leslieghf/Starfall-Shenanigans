@@ -64,6 +64,11 @@ local function signedComponent(vec, axisName)
     return component(vec, axis) * sign
 end
 
+local function vectorMagnitude(vec)
+    if not vec then return 0 end
+    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+end
+
 local function displayAxis(axisName, value)
     if value < 0 then return flipAxis(axisName) end
     return axisName
@@ -212,6 +217,7 @@ local function updateArrow(gizmo, axis, origin, input)
     local shaft = gizmo.parts.shaft
     local head = gizmo.parts.head
     local value = signedComponent(input, axis.axis)
+    local magnitude = vectorMagnitude(input)
     local worldAxis = displayAxis(axis.axis, value)
     local dir = dirFor(worldAxis)
     local length = arrow.length
@@ -219,7 +225,7 @@ local function updateArrow(gizmo, axis, origin, input)
         arrow.thickness or 1,
         arrow.thicknessLogFactor or 0,
         arrow.inputScale or 1,
-        math.abs(value)
+        magnitude
     )
     thickness = clamped(thickness, arrow.minThickness, arrow.maxThickness)
     local shaftBounds = boundsFor(shaft.model)

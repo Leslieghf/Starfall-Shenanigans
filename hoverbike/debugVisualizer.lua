@@ -10,16 +10,16 @@ local GizmoAngArrow = require("gizmoAngArrow.lua")
 
 local DebugVisualizer = {
     enabled = true,
-    updateInterval = 0.1,
+    updateInterval = 0.02,
     nextUpdateAt = 0,
 
     linArrow = {
         arrow = {
             length = 50,
             thickness = 1,
-            maxThickness = 12,
-            inputScale = 0.5,
-            thicknessLogFactor = 4
+            maxThickness = 8,
+            inputScale = 0.01,
+            thicknessLogFactor = 1.2
         },
 
         parts = {
@@ -66,9 +66,9 @@ local DebugVisualizer = {
             count = 4,
             localScale = Vector(0.1, 0.1, 0.1),
             minScaleFactor = 0.5,
-            maxScaleFactor = 4,
-            inputScale = 1,
-            scaleLogFactor = 0.8
+            maxScaleFactor = 3,
+            inputScale = 0.02,
+            scaleLogFactor = 0.7
         },
 
         axes = {

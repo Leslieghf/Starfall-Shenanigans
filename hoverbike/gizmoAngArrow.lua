@@ -57,6 +57,11 @@ local function signedComponent(vec, axisName)
     return component(vec, axis) * sign
 end
 
+local function vectorMagnitude(vec)
+    if not vec then return 0 end
+    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+end
+
 local function flipAxis(axisName)
     if string.sub(axisName, 1, 1) == "-" then return string.sub(axisName, 2) end
     return "-" .. axisName
@@ -186,10 +191,11 @@ local function updateRing(gizmo, axis, origin, input)
     local head = gizmo.head
     local normal, first, second = basisFor(axis.axis)
     local value = signedComponent(input, axis.axis)
+    local magnitude = vectorMagnitude(input)
     local direction = directionFor(axis, value)
     local phase = timer.curtime() * (axis.spinSpeed or 0) * direction
     local headCount = head.count or 4
-    local currentHeadScale = head.localScale * logScaleFactor(head, math.abs(value or 0))
+    local currentHeadScale = head.localScale * logScaleFactor(head, magnitude)
 
     place(
         ensureHolo(axis, "ring", ring.model),
