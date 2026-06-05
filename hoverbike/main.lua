@@ -25,10 +25,11 @@ local function update()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
+    local totalInertia = RigidbodyControl.getTotalInertia(PropControl.Registry)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
     local appliedForce = Vector()
-    local appliedTorque = AngVelControl.applyTotalTorque(ent, PropControl.Registry)
+    local appliedTorque = Vector()
 
     if VelControl.shouldApplyForce(tr, vel.z) then
         appliedForce = VelControl.applyForce(
@@ -37,6 +38,16 @@ local function update()
             VelControl.getGravityCompensationForce(height, vel.z, totalMass),
             VelControl.getSpringForce(height, vel.z, totalMass),
             VelControl.getDampingForce(height, vel.z, totalMass)
+        )
+    end
+
+    local uprightErrorAxis = AngVelControl.getUprightErrorAxis(ent, AngVelControl.TARGET_UP)
+    if AngVelControl.shouldApplyTorque(ent, uprightErrorAxis) then
+        appliedTorque = AngVelControl.applyTorque(
+            ent,
+            AngVelControl.getUprightSpringTorque(ent, totalInertia, uprightErrorAxis),
+            AngVelControl.getUprightIntegralTorque(ent, totalInertia, uprightErrorAxis),
+            AngVelControl.getRotationalDampingTorque(ent, totalInertia)
         )
     end
     

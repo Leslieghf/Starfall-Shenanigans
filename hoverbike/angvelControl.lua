@@ -1,12 +1,11 @@
---@include rigidbodyControl.lua
-
-local RigidbodyControl = require("rigidbodyControl.lua")
-
 local AngVelControl = {}
 AngVelControl.UPRIGHT_FACTOR = 150.0
-AngVelControl.UPRIGHT_DAMPING_RATIO = 1.0
+AngVelControl.UPRIGHT_DAMPING_RATIO = 0.9
 AngVelControl.UPRIGHT_INTEGRAL_FACTOR = 150.0
 AngVelControl.UPRIGHT_INTEGRAL_LIMIT = 5.0
+AngVelControl.UPRIGHT_INTEGRAL_MAX_DT = 0.05
+AngVelControl.ERROR_DEADZONE = 0.001
+AngVelControl.ANGVEL_DEADZONE = 0.001
 AngVelControl.TARGET_UP = Vector(0, 0, 1)
 AngVelControl.UprightIntegral = Vector()
 AngVelControl.LastUpdateAt = nil
@@ -47,7 +46,7 @@ local function uprightDampingFactor()
     return 2 * AngVelControl.UPRIGHT_DAMPING_RATIO * math.sqrt(AngVelControl.UPRIGHT_FACTOR)
 end
 
-local function uprightErrorAxis(ent, targetUp)
+function AngVelControl.getUprightErrorAxis(ent, targetUp)
     local currentUp = localVectorToWorld(ent, LOCAL_UP)
     local normalizedTargetUp = normalized(targetUp)
     local errorAxis = currentUp:cross(normalizedTargetUp)
@@ -66,6 +65,7 @@ end
 local function updateUprightIntegral(errorAxis)
     local now = timer.curtime()
     local dt = AngVelControl.LastUpdateAt and now - AngVelControl.LastUpdateAt or 0
+    dt = math.min(dt, AngVelControl.UPRIGHT_INTEGRAL_MAX_DT)
     AngVelControl.LastUpdateAt = now
     AngVelControl.UprightIntegral = clampedMagnitude(
         AngVelControl.UprightIntegral + errorAxis * dt,
@@ -81,32 +81,34 @@ function AngVelControl.setTargetUp(targetUp)
     AngVelControl.LastUpdateAt = nil
 end
 
+function AngVelControl.shouldApplyTorque(ent, uprightErrorAxis)
+    return
+        magnitude(uprightErrorAxis) > AngVelControl.ERROR_DEADZONE or
+        magnitude(AngVelControl.UprightIntegral) > AngVelControl.ERROR_DEADZONE or
+        magnitude(ent:getAngleVelocity()) > AngVelControl.ANGVEL_DEADZONE
+end
+
 function AngVelControl.getRotationalDampingTorque(ent, inertia)
     local angVel = ent:getAngleVelocity()
 
     return localInertiaTorqueToWorld(ent, inertia, angVel, -uprightDampingFactor())
 end
 
-function AngVelControl.getUprightTorque(ent, inertia, targetUp)
-    local worldErrorAxis = uprightErrorAxis(ent, targetUp)
-    local worldCorrectionAxis =
-        worldErrorAxis * AngVelControl.UPRIGHT_FACTOR +
-        updateUprightIntegral(worldErrorAxis) * AngVelControl.UPRIGHT_INTEGRAL_FACTOR
-    local localCorrectionAxis = worldVectorToLocal(ent, worldCorrectionAxis)
+function AngVelControl.getUprightSpringTorque(ent, inertia, uprightErrorAxis)
+    local localErrorAxis = worldVectorToLocal(ent, uprightErrorAxis)
 
-    return localInertiaTorqueToWorld(ent, inertia, localCorrectionAxis, 1)
+    return localInertiaTorqueToWorld(ent, inertia, localErrorAxis, AngVelControl.UPRIGHT_FACTOR)
 end
 
-function AngVelControl.getTargetTorque(ent, propsRegistry)
-    local inertia = RigidbodyControl.getTotalInertia(propsRegistry)
+function AngVelControl.getUprightIntegralTorque(ent, inertia, uprightErrorAxis)
+    local integralAxis = updateUprightIntegral(uprightErrorAxis)
+    local localIntegralAxis = worldVectorToLocal(ent, integralAxis)
 
-    return
-        AngVelControl.getUprightTorque(ent, inertia, AngVelControl.TARGET_UP) +
-        AngVelControl.getRotationalDampingTorque(ent, inertia)
+    return localInertiaTorqueToWorld(ent, inertia, localIntegralAxis, AngVelControl.UPRIGHT_INTEGRAL_FACTOR)
 end
 
-function AngVelControl.applyTotalTorque(ent, propsRegistry)
-    local torque = AngVelControl.getTargetTorque(ent, propsRegistry)
+function AngVelControl.applyTorque(ent, springTorque, integralTorque, dampingTorque)
+    local torque = springTorque + integralTorque + dampingTorque
     ent:applyTorque(torque)
     return torque
 end
