@@ -6,9 +6,9 @@ local DebugAngArrow = {}
 local state = {}
 local LOCAL_X = Vector(1, 0, 0)
 local LOCAL_Y = Vector(0, 1, 0)
-local HEAD_PART = {forwardAxis = "z"}
-local SPEAR_SHAFT = {model = "models/xqm/cylinderx1.mdl", forwardAxis = "x", radius = 0.045}
-local SPEAR_HEAD = {model = "models/hunter/misc/cone2x2.mdl", forwardAxis = "z", localScale = Vector(0.045, 0.045, 0.045)}
+local HEAD_PART = { forwardAxis = "z" }
+local SPEAR_SHAFT = { model = "models/xqm/cylinderx1.mdl", forwardAxis = "x", radius = 0.045 }
+local SPEAR_HEAD = { model = "models/hunter/misc/cone2x2.mdl", forwardAxis = "z", localScale = Vector(0.045, 0.045, 0.045) }
 local LAYOUT_RADIUS_STEP = 0.25
 local LAYOUT_SCALE_STEP = 0.0025
 

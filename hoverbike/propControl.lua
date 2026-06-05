@@ -26,10 +26,17 @@ function PropControl.addPropToRegistry(ent, name)
     PropControl.Registry[name] = {ent = ent}
 end
 
-function PropControl.isIgnoredProp(ent)
+function PropControl.isRegisteredProp(ent)
     for _, data in pairs(PropControl.Registry) do
-        if ent == data.ent then return false end
+        if ent == data.ent then return true end
     end
+
+    return false
+end
+
+function PropControl.shouldHitHeightTrace(ent)
+    if PropControl.isRegisteredProp(ent) then return false end
+    if ent:isPlayer() or ent:isWeapon() or ent:isNPC() or ent:isVehicle() or ent:isNextBot() then return false end
 
     return true
 end
@@ -38,7 +45,7 @@ function PropControl.getHeightTrace(pos)
     return trace.trace(
         pos,
         pos - Vector(0, 0, Utils.TARGET_HEIGHT * 4),
-        PropControl.isIgnoredProp
+        PropControl.shouldHitHeightTrace
     )
 end
 

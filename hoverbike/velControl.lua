@@ -10,6 +10,7 @@ local VelControl = {}
 
 VelControl.SPRING = 1.9
 VelControl.DAMPING = 1.5
+VelControl.MAX_DAMPING_IMPULSE_PER_MASS = 120
 
 function VelControl.getGravityCompensationForce(height, velZ, mass)
     if height > Utils.TARGET_HEIGHT then return Vector() end
@@ -31,8 +32,9 @@ function VelControl.getDampingForce(height, velZ, mass)
     if velZ >= 0 then return Vector() end
 
     local influence = PropControl.getInfluence(height, velZ)
+    local dampingImpulsePerMass = math.min(-velZ * VelControl.DAMPING * influence, VelControl.MAX_DAMPING_IMPULSE_PER_MASS)
 
-    return Vector(0, 0, -velZ * VelControl.DAMPING * influence * mass)
+    return Vector(0, 0, dampingImpulsePerMass * mass)
 end
 
 function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, springForce, dampingForce)

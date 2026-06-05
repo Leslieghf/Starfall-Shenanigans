@@ -4,8 +4,8 @@ local Draw = require("debugDraw.lua")
 local DebugLinArrow = {}
 
 local state = {}
-local SHAFT = {model = "models/xqm/cylinderx1.mdl", forwardAxis = "x", radius = 0.075}
-local HEAD = {model = "models/hunter/misc/cone2x2.mdl", forwardAxis = "z", localScale = Vector(0.025, 0.025, 0.025)}
+local SHAFT = { model = "models/xqm/cylinderx1.mdl", forwardAxis = "x", radius = 0.075 }
+local HEAD = { model = "models/hunter/misc/cone2x2.mdl", forwardAxis = "z", localScale = Vector(0.025, 0.025, 0.025) }
 
 local function arrowColor(config, length, thickness)
     local lengthAmount = Draw.rangeAmount(length, Draw.clamped(config.length.base, config.length.min, config.length.max), config.length.max)
