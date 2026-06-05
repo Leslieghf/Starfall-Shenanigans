@@ -1,10 +1,10 @@
---@include propControl.lua
---@include rigidbodyControl.lua
+--@include ../control/propControl.lua
+--@include ../control/rigidbodyControl.lua
 --@include debugLinArrow.lua
 --@include debugAngArrow.lua
 
-local PropControl = require("propControl.lua")
-local RigidbodyControl = require("rigidbodyControl.lua")
+local PropControl = require("../control/propControl.lua")
+local RigidbodyControl = require("../control/rigidbodyControl.lua")
 local DebugLinArrow = require("debugLinArrow.lua")
 local DebugAngArrow = require("debugAngArrow.lua")
 

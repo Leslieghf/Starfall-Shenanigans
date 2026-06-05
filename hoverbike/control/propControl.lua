@@ -1,6 +1,6 @@
---@include utils.lua
+--@include ../utils.lua
 
-local Utils = require("utils.lua")
+local Utils = require("../utils.lua")
 
 local PropControl = {}
 

@@ -1,22 +1,26 @@
 --@name Hoverbike
 --@server
 --@model models/hunter/plates/plate1x2.mdl
---@include propControl.lua
---@include rigidbodyControl.lua
---@include velControl.lua
---@include angvelControl.lua
---@include manualControl.lua
---@include debugDraw.lua
---@include debugLinArrow.lua
---@include debugAngArrow.lua
---@include debugVisualizer.lua
+--@include control/propControl.lua
+--@include control/rigidbodyControl.lua
+--@include control/velControl.lua
+--@include control/angvelControl.lua
+--@include control/manualControl.lua
+--@include control/inputControl.lua
+--@include control/driveControl.lua
+--@include debug/debugDraw.lua
+--@include debug/debugLinArrow.lua
+--@include debug/debugAngArrow.lua
+--@include debug/debugVisualizer.lua
 
-local PropControl = require("propControl.lua")
-local RigidbodyControl = require("rigidbodyControl.lua")
-local VelControl = require("velControl.lua")
-local AngVelControl = require("angvelControl.lua")
-local ManualControl = require("manualControl.lua")
-local DebugVisualizer = require("debugVisualizer.lua")
+local PropControl = require("control/propControl.lua")
+local RigidbodyControl = require("control/rigidbodyControl.lua")
+local VelControl = require("control/velControl.lua")
+local AngVelControl = require("control/angvelControl.lua")
+local ManualControl = require("control/manualControl.lua")
+local InputControl = require("control/inputControl.lua")
+local DriveControl = require("control/driveControl.lua")
+local DebugVisualizer = require("debug/debugVisualizer.lua")
 
 local function startup()
     PropControl.startup()
@@ -28,6 +32,7 @@ local function update()
 
     if ManualControl.consumeEndedTransition(manualControlActive) then
         AngVelControl.resetState()
+        DriveControl.resetState()
     end
 
     if manualControlActive then
@@ -63,9 +68,14 @@ local function update()
 
     VelControl.debugPrint(tr, height, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
 
+    local input = InputControl.read(PropControl)
+    local driveForce, driveTorque = DriveControl.apply(ent, PropControl.Registry, input, totalMass, totalInertia)
+    appliedForce = appliedForce + driveForce
+    appliedTorque = appliedTorque + driveTorque
+
     local uprightErrorAxis = AngVelControl.getUprightErrorAxis(ent, AngVelControl.TARGET_UP)
     if AngVelControl.shouldApplyTorque(ent, uprightErrorAxis) then
-        appliedTorque = AngVelControl.applyTorque(
+        appliedTorque = appliedTorque + AngVelControl.applyTorque(
             ent,
             AngVelControl.getUprightSpringTorque(ent, totalInertia, uprightErrorAxis),
             AngVelControl.getUprightIntegralTorque(ent, totalInertia, uprightErrorAxis),
