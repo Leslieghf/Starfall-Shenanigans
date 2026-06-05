@@ -5,6 +5,7 @@
 --@include rigidbodyControl.lua
 --@include velControl.lua
 --@include angvelControl.lua
+--@include manualControl.lua
 --@include debugDraw.lua
 --@include debugLinArrow.lua
 --@include debugAngArrow.lua
@@ -14,6 +15,7 @@ local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
 local AngVelControl = require("angvelControl.lua")
+local ManualControl = require("manualControl.lua")
 local DebugVisualizer = require("debugVisualizer.lua")
 
 local function startup()
@@ -22,6 +24,17 @@ end
 
 local function update()
     local ent = chip()
+    local manualControlActive = ManualControl.isActive()
+
+    if ManualControl.consumeEndedTransition(manualControlActive) then
+        AngVelControl.resetState()
+    end
+
+    if manualControlActive then
+        DebugVisualizer.cleanup()
+        return
+    end
+
     local pos = ent:getPos()
     local vel = ent:getVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
@@ -64,7 +77,30 @@ hook.add("Think", "update", function()
 end)
 
 hook.add("EntityRemoved", "HoverbikeCleaning", function(ent)
+    ManualControl.clear(ent)
+
     if ent == chip() then
         DebugVisualizer.cleanup()
     end
+end)
+
+local function isControlledBikePart(ent)
+    return ManualControl.isControlledPart(ent, PropControl)
+end
+
+hook.add("OnPhysgunPickup", "HoverbikePhysgunPickup", function(ply, ent)
+    if isControlledBikePart(ent) then
+        ManualControl.pickup(ent)
+    end
+end)
+
+hook.add("PhysgunDrop", "HoverbikePhysgunDrop", function(ply, ent)
+    if isControlledBikePart(ent) then
+        ManualControl.drop(ent)
+    end
+end)
+
+hook.add("PlayerDisconnected", "HoverbikePhysgunDisconnect", function(ply)
+    ManualControl.clearAll()
+    DebugVisualizer.cleanup()
 end)

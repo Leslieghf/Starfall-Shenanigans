@@ -89,6 +89,10 @@ end
 
 function AngVelControl.setTargetUp(targetUp)
     AngVelControl.TARGET_UP = normalized(targetUp)
+    AngVelControl.resetState()
+end
+
+function AngVelControl.resetState()
     AngVelControl.UprightIntegral = Vector()
     AngVelControl.LastUpdateAt = nil
     AngVelControl.LastTorqueAt = nil
