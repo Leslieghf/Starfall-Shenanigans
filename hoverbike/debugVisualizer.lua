@@ -1,5 +1,6 @@
 --@include propControl.lua
 --@include rigidbodyControl.lua
+--@include gizmoCore.lua
 --@include gizmoLinArrow.lua
 --@include gizmoAngArrow.lua
 
@@ -21,25 +22,13 @@ local DebugVisualizer = {
             lengthInputScale = 0.02,
             lengthLogFactor = 40,
             thickness = 3,
+            minThickness = 3,
             maxThickness = 16,
             inputScale = 0.02,
             thicknessLogFactor = 2,
             deadzone = 0.5,
             color = Color(255, 255, 255, 255),
             colorByDirection = true
-        },
-
-        parts = {
-            shaft = {
-                model = "models/xqm/cylinderx1.mdl",
-                forwardAxis = "x",
-                radius = 0.075
-            },
-            head = {
-                model = "models/hunter/misc/cone2x2.mdl",
-                forwardAxis = "z",
-                localScale = Vector(0.025, 0.025, 0.025)
-            }
         },
 
         centerMarker = {
@@ -66,7 +55,9 @@ local DebugVisualizer = {
             minScaleFactor = 0.75,
             maxScaleFactor = 2,
             inputScale = 0.02,
-            scaleLogFactor = 0.25
+            scaleLogFactor = 0.25,
+            layoutRadiusStep = 0.25,
+            layoutScaleStep = 0.0025
         },
 
         head = {

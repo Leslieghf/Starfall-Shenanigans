@@ -4,6 +4,7 @@
 --@include propControl.lua
 --@include rigidbodyControl.lua
 --@include velControl.lua
+--@include gizmoCore.lua
 --@include gizmoLinArrow.lua
 --@include gizmoAngArrow.lua
 --@include debugVisualizer.lua
