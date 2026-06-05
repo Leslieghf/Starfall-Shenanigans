@@ -11,6 +11,7 @@ local VelControl = {}
 VelControl.SPRING = 1.9
 VelControl.DAMPING = 1.5
 VelControl.MAX_DAMPING_IMPULSE_PER_MASS = 120
+VelControl.DEBUG = true
 
 function VelControl.getGravityCompensationForce(height, velZ, mass)
     if height > Utils.TARGET_HEIGHT then return Vector() end
@@ -43,6 +44,25 @@ function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, spr
     
     ent:applyForceOffset(force, comPos)
     return force, comPos
+end
+
+function VelControl.debugPrint(tr, height, velZ, mass, gravityForce, springForce, dampingForce, totalForce)
+    if not VelControl.DEBUG then return end
+
+    local influence = PropControl.getInfluence(height, velZ)
+    Utils.debugPrint(string.format(
+        "[hover-z] hit=%s h=%.2f err=%.2f vz=%.2f influence=%.3f mass=%.2f gravity=%.2f spring=%.2f damping=%.2f total=%.2f",
+        tostring(tr.Hit),
+        height,
+        Utils.TARGET_HEIGHT - height,
+        velZ,
+        influence,
+        mass,
+        gravityForce.z,
+        springForce.z,
+        dampingForce.z,
+        totalForce.z
+    ))
 end
 
 function VelControl.shouldApplyForce(tr, velZ)

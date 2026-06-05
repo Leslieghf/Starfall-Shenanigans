@@ -43,16 +43,25 @@ local function update()
     local height = PropControl.getHeight(tr, pos)
     local appliedForce = Vector()
     local appliedTorque = Vector()
+    local gravityForce = Vector()
+    local springForce = Vector()
+    local dampingForce = Vector()
 
     if VelControl.shouldApplyForce(tr, vel.z) then
+        gravityForce = VelControl.getGravityCompensationForce(height, vel.z, totalMass)
+        springForce = VelControl.getSpringForce(height, vel.z, totalMass)
+        dampingForce = VelControl.getDampingForce(height, vel.z, totalMass)
+
         appliedForce = VelControl.applyForce(
             ent,
             PropControl.Registry,
-            VelControl.getGravityCompensationForce(height, vel.z, totalMass),
-            VelControl.getSpringForce(height, vel.z, totalMass),
-            VelControl.getDampingForce(height, vel.z, totalMass)
+            gravityForce,
+            springForce,
+            dampingForce
         )
     end
+
+    VelControl.debugPrint(tr, height, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
 
     local uprightErrorAxis = AngVelControl.getUprightErrorAxis(ent, AngVelControl.TARGET_UP)
     if AngVelControl.shouldApplyTorque(ent, uprightErrorAxis) then
