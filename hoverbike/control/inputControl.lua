@@ -2,7 +2,6 @@ local InputControl = {}
 
 local KEY = {
     JUMP = IN_KEY.JUMP,
-    DUCK = IN_KEY.DUCK,
     FORWARD = IN_KEY.FORWARD,
     BACK = IN_KEY.BACK,
     MOVE_LEFT = IN_KEY.MOVELEFT,
@@ -37,7 +36,7 @@ function InputControl.read(propControl)
             active = false,
             throttle = 0,
             yaw = 0,
-            lift = 0,
+            jumpDown = false,
             boost = false,
             pilot = nil
         }
@@ -46,8 +45,8 @@ function InputControl.read(propControl)
     return {
         active = true,
         throttle = axis(pilot, KEY.FORWARD, KEY.BACK),
-        yaw = axis(pilot, KEY.MOVE_RIGHT, KEY.MOVE_LEFT),
-        lift = axis(pilot, KEY.JUMP, KEY.DUCK),
+        yaw = axis(pilot, KEY.MOVE_LEFT, KEY.MOVE_RIGHT),
+        jumpDown = pilot:keyDown(KEY.JUMP),
         boost = pilot:keyDown(KEY.SPEED),
         pilot = pilot
     }

@@ -7,6 +7,7 @@
 --@include control/angvelControl.lua
 --@include control/manualControl.lua
 --@include control/inputControl.lua
+--@include control/heightControl.lua
 --@include control/driveControl.lua
 --@include debug/debugDraw.lua
 --@include debug/debugLinArrow.lua
@@ -19,6 +20,7 @@ local VelControl = require("control/velControl.lua")
 local AngVelControl = require("control/angvelControl.lua")
 local ManualControl = require("control/manualControl.lua")
 local InputControl = require("control/inputControl.lua")
+local HeightControl = require("control/heightControl.lua")
 local DriveControl = require("control/driveControl.lua")
 local DebugVisualizer = require("debug/debugVisualizer.lua")
 
@@ -33,6 +35,7 @@ local function update()
     if ManualControl.consumeEndedTransition(manualControlActive) then
         AngVelControl.resetState()
         DriveControl.resetState()
+        HeightControl.resetInputState()
     end
 
     if manualControlActive then
@@ -44,8 +47,10 @@ local function update()
     local vel = ent:getVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
     local totalInertia = RigidbodyControl.getTotalInertia(PropControl.Registry)
+    local input = InputControl.read(PropControl)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
+    local targetHeight = HeightControl.update(input, height)
     local appliedForce = Vector()
     local appliedTorque = Vector()
     local gravityForce = Vector()
@@ -53,9 +58,9 @@ local function update()
     local dampingForce = Vector()
 
     if VelControl.shouldApplyForce(tr, vel.z) then
-        gravityForce = VelControl.getGravityCompensationForce(height, vel.z, totalMass)
-        springForce = VelControl.getSpringForce(height, vel.z, totalMass)
-        dampingForce = VelControl.getDampingForce(height, vel.z, totalMass)
+        gravityForce = VelControl.getGravityCompensationForce(height, vel.z, targetHeight, totalMass)
+        springForce = VelControl.getSpringForce(height, vel.z, targetHeight, totalMass)
+        dampingForce = VelControl.getDampingForce(height, vel.z, targetHeight, totalMass)
 
         appliedForce = VelControl.applyForce(
             ent,
@@ -66,9 +71,8 @@ local function update()
         )
     end
 
-    VelControl.debugPrint(tr, height, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
+    VelControl.debugPrint(tr, height, targetHeight, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
 
-    local input = InputControl.read(PropControl)
     local driveForce, driveTorque = DriveControl.apply(ent, PropControl.Registry, input, totalMass, totalInertia)
     appliedForce = appliedForce + driveForce
     appliedTorque = appliedTorque + driveTorque

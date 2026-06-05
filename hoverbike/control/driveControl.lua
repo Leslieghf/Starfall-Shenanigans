@@ -4,9 +4,9 @@ local RigidbodyControl = require("rigidbodyControl.lua")
 local DriveControl = {}
 
 DriveControl.FORWARD_ACCEL = 45
-DriveControl.VERTICAL_ACCEL = 25
 DriveControl.BOOST_MULTIPLIER = 1.75
-DriveControl.YAW_FACTOR = 800
+DriveControl.YAW_FACTOR = 8000
+DriveControl.FORWARD_AXIS = Vector(0, 1, 0)
 DriveControl.MIN_FORCE = 0.001
 DriveControl.MIN_TORQUE = 0.001
 DriveControl.MAX_DT = 0.05
@@ -22,6 +22,16 @@ end
 
 local function localInertiaTorqueToWorld(ent, inertia, localAxis, factor)
     return localVectorToWorld(ent, inertia * localAxis * factor)
+end
+
+local function horizontalLocalDirection(ent, localAxis)
+    local direction = localVectorToWorld(ent, localAxis)
+    direction.z = 0
+
+    local length = magnitude(direction)
+    if length <= DriveControl.MIN_FORCE then return Vector() end
+
+    return direction / length
 end
 
 local function torqueDt()
@@ -40,10 +50,9 @@ function DriveControl.getForce(ent, input, mass)
     if not input.active then return Vector() end
 
     local boost = input.boost and DriveControl.BOOST_MULTIPLIER or 1
-    local localForce = Vector(input.throttle * DriveControl.FORWARD_ACCEL * mass * boost, 0, 0)
-    local verticalForce = Vector(0, 0, input.lift * DriveControl.VERTICAL_ACCEL * mass)
+    local direction = horizontalLocalDirection(ent, DriveControl.FORWARD_AXIS)
 
-    return localVectorToWorld(ent, localForce) + verticalForce
+    return direction * input.throttle * DriveControl.FORWARD_ACCEL * mass * boost
 end
 
 function DriveControl.getYawTorque(ent, input, inertia)

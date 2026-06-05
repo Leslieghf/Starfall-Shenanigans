@@ -44,7 +44,7 @@ end
 function PropControl.getHeightTrace(pos)
     return trace.trace(
         pos,
-        pos - Vector(0, 0, Utils.TARGET_HEIGHT * 4),
+        pos - Vector(0, 0, Utils.HEIGHT_TRACE_LENGTH),
         PropControl.shouldHitHeightTrace
     )
 end
@@ -53,16 +53,17 @@ function PropControl.getHeight(tr, pos)
     return pos.z - tr.HitPos.z
 end
 
-function PropControl.getTimeToTarget(height, velZ)
+function PropControl.getTimeToTarget(height, velZ, targetHeight)
     if velZ >= 0 then return math.huge end
+    targetHeight = targetHeight or Utils.TARGET_HEIGHT
 
-    local distanceToTarget = math.max(height - Utils.TARGET_HEIGHT, 0)
+    local distanceToTarget = math.max(height - targetHeight, 0)
 
     return distanceToTarget / math.max(-velZ, 1)
 end
 
-function PropControl.getInfluence(height, velZ)
-    local timeToTarget = PropControl.getTimeToTarget(height, velZ)
+function PropControl.getInfluence(height, velZ, targetHeight)
+    local timeToTarget = PropControl.getTimeToTarget(height, velZ, targetHeight)
     local t = math.clamp(timeToTarget / Utils.LOOKAHEAD_TIME, 0, 1)
 
     return (1 - t)^Utils.INFLUENCE_FALLOFF_EXPONENT
