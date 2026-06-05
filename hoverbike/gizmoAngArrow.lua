@@ -37,12 +37,32 @@ local function cleanupVisuals(gizmo)
     gizmo.spearHeadModel = nil
     gizmo.headCount = nil
     gizmo.headLayoutKey = nil
+    gizmo.ringTangent = nil
 end
 
-local function ringAngleFor(ring, dir, phase)
-    local angle = Core.angleFor(ring, dir)
-    angle:rotateAroundAxis(dir, phase)
-    return angle
+local function ringBaseTangent(gizmo, dir)
+    local tangent = gizmo.ringTangent
+
+    if tangent then
+        tangent = Core.projectToPlane(tangent, dir)
+        local length = Core.magnitude(tangent)
+
+        if length > 0.0001 then
+            tangent = Core.normalized(tangent, length)
+            gizmo.ringTangent = tangent
+            return tangent
+        end
+    end
+
+    tangent = Core.perpendicularTo(dir)
+    gizmo.ringTangent = tangent
+    return tangent
+end
+
+local function ringAngleFor(gizmo, dir, phase)
+    local tangent = ringBaseTangent(gizmo, dir)
+    local spunTangent = Core.radialFor(tangent, dir:cross(tangent), phase)
+    return spunTangent:getAngleEx(dir)
 end
 
 local function quantized(value, step)
@@ -99,7 +119,7 @@ local function updateRing(gizmo, origin, dir, ringFactor, headFactor, color)
     Core.place(
         ringHolo,
         origin,
-        ringAngleFor(ring, dir, phase),
+        ringAngleFor(gizmo, dir, phase),
         ringScale(ring, ringFactor),
         color
     )

@@ -4,6 +4,7 @@
 --@include propControl.lua
 --@include rigidbodyControl.lua
 --@include velControl.lua
+--@include angvelControl.lua
 --@include gizmoCore.lua
 --@include gizmoLinArrow.lua
 --@include gizmoAngArrow.lua
@@ -12,6 +13,7 @@
 local PropControl = require("propControl.lua")
 local RigidbodyControl = require("rigidbodyControl.lua")
 local VelControl = require("velControl.lua")
+local AngVelControl = require("angvelControl.lua")
 local DebugVisualizer = require("debugVisualizer.lua")
 
 local function startup()
@@ -22,13 +24,14 @@ local function update()
     local ent = chip()
     local pos = ent:getPos()
     local vel = ent:getVelocity()
-    local angVel = ent:getAngleVelocity()
     local totalMass = RigidbodyControl.getMass(PropControl.Registry)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
+    local appliedForce = Vector()
+    local appliedTorque = AngVelControl.applyTotalTorque(ent, PropControl.Registry)
 
     if VelControl.shouldApplyForce(tr, vel.z) then
-        VelControl.applyForce(
+        appliedForce = VelControl.applyForce(
             ent,
             PropControl.Registry,
             VelControl.getGravityCompensationForce(height, vel.z, totalMass),
@@ -37,7 +40,7 @@ local function update()
         )
     end
     
-    DebugVisualizer.update(vel, angVel)
+    DebugVisualizer.update(appliedForce, appliedTorque)
 end
 
 hook.add("Think", "update", function()

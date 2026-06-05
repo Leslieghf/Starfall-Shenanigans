@@ -16,6 +16,14 @@ function GizmoCore.normalized(vec, len)
     return vec / len
 end
 
+function GizmoCore.dot(a, b)
+    return a.x * b.x + a.y * b.y + a.z * b.z
+end
+
+function GizmoCore.projectToPlane(vec, normal)
+    return vec - normal * GizmoCore.dot(vec, normal)
+end
+
 function GizmoCore.axisInfo(axisName)
     local sign = 1
     local component = axisName
