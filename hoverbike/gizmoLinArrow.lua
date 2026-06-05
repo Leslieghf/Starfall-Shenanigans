@@ -1,26 +1,34 @@
 local GizmoLinArrow = {}
 
-local ALIGN = {
-    x = {
-        x = Angle(0, 0, 0), y = Angle(0, 90, 0), z = Angle(-90, 0, 0),
-        ["-x"] = Angle(0, 180, 0), ["-y"] = Angle(0, -90, 0), ["-z"] = Angle(90, 0, 0)
-    },
-    y = {
-        x = Angle(0, -90, 0), y = Angle(0, 0, 0), z = Angle(0, 0, 90),
-        ["-x"] = Angle(0, 90, 0), ["-y"] = Angle(0, 180, 0), ["-z"] = Angle(0, 0, -90)
-    },
-    z = {
-        x = Angle(90, 0, 0), y = Angle(0, 0, -90), z = Angle(0, 0, 0),
-        ["-x"] = Angle(-90, 0, 0), ["-y"] = Angle(0, 0, 90), ["-z"] = Angle(180, 0, 0)
-    }
-}
-
 local modelBounds = {}
 
 local function remove(holo)
     if holo and holo:isValid() then
         holo:remove()
     end
+end
+
+local function magnitude(vec)
+    if not vec then return 0 end
+    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+end
+
+local function normalized(vec, len)
+    len = len or magnitude(vec)
+    if len <= 0.0001 then return nil end
+    return vec / len
+end
+
+local function directionColor(dir, fallback)
+    fallback = fallback or Color(255, 255, 255, 255)
+    if not dir then return fallback end
+
+    return Color(
+        math.floor(math.abs(dir.x) * 255),
+        math.floor(math.abs(dir.y) * 255),
+        math.floor(math.abs(dir.z) * 255),
+        fallback.a or 255
+    )
 end
 
 local function axisInfo(axisName)
@@ -43,45 +51,6 @@ local function component(vec, axisName)
     if axisName == "x" then return vec.x end
     if axisName == "y" then return vec.y end
     return vec.z
-end
-
-local function flipAxis(axisName)
-    if string.sub(axisName, 1, 1) == "-" then return string.sub(axisName, 2) end
-    return "-" .. axisName
-end
-
-local function dirFor(axisName)
-    local axis, sign = axisInfo(axisName)
-    if axis == "x" then return Vector(sign, 0, 0) end
-    if axis == "y" then return Vector(0, sign, 0) end
-    return Vector(0, 0, sign)
-end
-
-local function signedComponent(vec, axisName)
-    if not vec then return 0 end
-
-    local axis, sign = axisInfo(axisName)
-    return component(vec, axis) * sign
-end
-
-local function vectorMagnitude(vec)
-    if not vec then return 0 end
-    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
-end
-
-local function displayAxis(axisName, value)
-    if value < 0 then return flipAxis(axisName) end
-    return axisName
-end
-
-local function logScaled(base, factor, inputScale, magnitude)
-    return base + math.log(1 + magnitude * inputScale) * factor
-end
-
-local function clamped(value, min, max)
-    if min and value < min then return min end
-    if max and value > max then return max end
-    return value
 end
 
 local function boundsFor(model)
@@ -131,33 +100,35 @@ local function scaleAlongForward(part, bounds, length, crossScale)
     return Vector(crossScale, crossScale, along)
 end
 
-local function shaftScale(shaft, bounds, length, thickness)
-    return scaleAlongForward(shaft, bounds, length, shaft.radius * thickness)
+local function clamped(value, min, max)
+    if min and value < min then return min end
+    if max and value > max then return max end
+    return value
 end
 
-local function headScale(head, thickness)
-    return head.localScale * thickness
+local function logScaled(base, factor, inputScale, inputMagnitude)
+    return base + math.log(1 + inputMagnitude * inputScale) * factor
 end
 
-local function clipPadding(part, length)
-    return length * part.clipPaddingFactor
+local function perpendicularTo(dir)
+    local reference = math.abs(dir.z) < 0.95 and Vector(0, 0, 1) or Vector(0, 1, 0)
+    local perpendicular = reference:cross(dir)
+    return normalized(perpendicular) or Vector(1, 0, 0)
 end
 
-local function setShaftClips(holo, startPos, endPos, dir)
-    holo:setClip(1, true, startPos, dir)
-    holo:setClip(2, true, endPos, dir * -1)
-end
+local function angleFor(part, dir)
+    local axis, sign = axisInfo(part.forwardAxis)
+    local forward = sign > 0 and dir or dir * -1
 
-local function angleFor(part, worldAxis)
-    local localAxis, localSign = axisInfo(part.forwardAxis)
-    local target = localSign > 0 and worldAxis or flipAxis(worldAxis)
-    local angle = ALIGN[localAxis][target]
-
-    if not angle then
-        error("Unsupported axis alignment: " .. tostring(part.forwardAxis) .. " to " .. tostring(worldAxis))
+    if axis == "x" then
+        return forward:getAngle()
     end
 
-    return angle
+    if axis == "z" then
+        return perpendicularTo(forward):getAngleEx(forward)
+    end
+
+    error("Arbitrary-vector alignment currently supports local X or Z forward axes only")
 end
 
 local function scaledOffset(point, scale, angle)
@@ -186,6 +157,18 @@ local function ensureHolo(owner, key, model)
     return owner[key]
 end
 
+local function ensureUnclippedHolo(owner, key, model)
+    local clipKey = key .. "UsesClip"
+    if owner[clipKey] ~= false then
+        remove(owner[key])
+        owner[key] = nil
+        owner[key .. "Model"] = nil
+        owner[clipKey] = false
+    end
+
+    return ensureHolo(owner, key, model)
+end
+
 local function place(holo, pos, angle, scale, color)
     holo:setPos(pos)
     holo:setAngles(angle)
@@ -212,75 +195,73 @@ local function updateCenterMarker(gizmo, origin)
     )
 end
 
-local function updateArrow(gizmo, axis, origin, input)
+local function cleanupArrow(gizmo)
+    remove(gizmo.shaft)
+    remove(gizmo.head)
+    gizmo.shaft = nil
+    gizmo.head = nil
+    gizmo.shaftModel = nil
+    gizmo.headModel = nil
+    gizmo.shaftUsesClip = nil
+end
+
+local function updateArrow(gizmo, origin, input)
+    local inputMagnitude = magnitude(input)
+    local dir = normalized(input, inputMagnitude)
     local arrow = gizmo.arrow
+
+    if not dir or inputMagnitude <= (arrow.deadzone or 0) then
+        cleanupArrow(gizmo)
+        return
+    end
+
     local shaft = gizmo.parts.shaft
     local head = gizmo.parts.head
-    local value = signedComponent(input, axis.axis)
-    local magnitude = vectorMagnitude(input)
-    local worldAxis = displayAxis(axis.axis, value)
-    local dir = dirFor(worldAxis)
-    local length = arrow.length
-    local thickness = logScaled(
-        arrow.thickness or 1,
-        arrow.thicknessLogFactor or 0,
-        arrow.inputScale or 1,
-        magnitude
+    local length = clamped(
+        logScaled(arrow.length or 50, arrow.lengthLogFactor or 0, arrow.lengthInputScale or arrow.inputScale or 1, inputMagnitude),
+        arrow.minLength,
+        arrow.maxLength
     )
-    thickness = clamped(thickness, arrow.minThickness, arrow.maxThickness)
+    local thickness = clamped(
+        logScaled(arrow.thickness or 1, arrow.thicknessLogFactor or 0, arrow.inputScale or 1, inputMagnitude),
+        arrow.minThickness,
+        arrow.maxThickness
+    )
+    local color = arrow.colorByDirection and directionColor(dir, arrow.color) or arrow.color
     local shaftBounds = boundsFor(shaft.model)
     local headBounds = boundsFor(head.model)
-    local shaftAngle = angleFor(shaft, worldAxis)
-    local headAngle = angleFor(head, worldAxis)
-    local currentHeadScale = headScale(head, thickness)
+    local shaftAngle = angleFor(shaft, dir)
+    local headAngle = angleFor(head, dir)
+    local shaftScale = scaleAlongForward(shaft, shaftBounds, length, (shaft.radius or 0.075) * thickness)
+    local headScale = head.localScale * thickness
     local shaftEnd = origin + dir * length
-    local shaftPadding = clipPadding(shaft, length)
-    local shaftRenderScale = shaftScale(shaft, shaftBounds, length + shaftPadding * 2, thickness)
-    local shaftHolo = ensureHolo(axis, "shaft", shaft.model)
+    local shaftHolo = ensureUnclippedHolo(gizmo, "shaft", shaft.model)
 
     place(
         shaftHolo,
-        positionAtBase(
-            origin - dir * shaftPadding,
-            shaft,
-            shaftBounds,
-            shaftRenderScale,
-            shaftAngle
-        ),
+        positionAtBase(origin, shaft, shaftBounds, shaftScale, shaftAngle),
         shaftAngle,
-        shaftRenderScale,
-        axis.color
+        shaftScale,
+        color
     )
-    setShaftClips(shaftHolo, origin, shaftEnd, dir)
 
     place(
-        ensureHolo(axis, "head", head.model),
-        positionAtBase(shaftEnd, head, headBounds, currentHeadScale, headAngle),
+        ensureHolo(gizmo, "head", head.model),
+        positionAtBase(shaftEnd, head, headBounds, headScale, headAngle),
         headAngle,
-        currentHeadScale,
-        axis.color
+        headScale,
+        color
     )
 end
 
 function GizmoLinArrow.update(gizmo, origin, input)
     updateCenterMarker(gizmo, origin)
-
-    for _, axis in ipairs(gizmo.axes) do
-        updateArrow(gizmo, axis, origin, input)
-    end
+    updateArrow(gizmo, origin, input)
 end
 
 function GizmoLinArrow.cleanup(gizmo)
     updateCenterMarker(gizmo, nil)
-
-    for _, axis in ipairs(gizmo.axes) do
-        remove(axis.shaft)
-        remove(axis.head)
-        axis.shaft = nil
-        axis.head = nil
-        axis.shaftModel = nil
-        axis.headModel = nil
-    end
+    cleanupArrow(gizmo)
 end
 
 return GizmoLinArrow

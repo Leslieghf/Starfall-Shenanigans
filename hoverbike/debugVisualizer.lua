@@ -16,30 +16,30 @@ local DebugVisualizer = {
     linArrow = {
         arrow = {
             length = 50,
-            thickness = 1,
-            maxThickness = 8,
-            inputScale = 0.01,
-            thicknessLogFactor = 1.2
+            minLength = 25,
+            maxLength = 180,
+            lengthInputScale = 0.02,
+            lengthLogFactor = 40,
+            thickness = 3,
+            maxThickness = 16,
+            inputScale = 0.02,
+            thicknessLogFactor = 2,
+            deadzone = 0.5,
+            color = Color(255, 255, 255, 255),
+            colorByDirection = true
         },
 
         parts = {
             shaft = {
                 model = "models/xqm/cylinderx1.mdl",
                 forwardAxis = "x",
-                radius = 0.075,
-                clipPaddingFactor = 0.25
+                radius = 0.075
             },
             head = {
                 model = "models/hunter/misc/cone2x2.mdl",
                 forwardAxis = "z",
                 localScale = Vector(0.025, 0.025, 0.025)
             }
-        },
-
-        axes = {
-            { axis = "x", color = Color(255, 80, 80, 255) },
-            { axis = "y", color = Color(80, 255, 80, 255) },
-            { axis = "z", color = Color(80, 160, 255, 255) }
         },
 
         centerMarker = {
@@ -52,12 +52,21 @@ local DebugVisualizer = {
 
     angArrow = {
         enabled = true,
+        deadzone = 0.5,
+        color = Color(255, 255, 255, 204),
+        colorByDirection = true,
+        colorSaturation = 0.65,
 
-        ring = {
+        ringConfig = {
             model = "models/hunter/tubes/tube4x4x025.mdl",
-            normalAxis = "z",
+            forwardAxis = "z",
             radius = 41.75,
-            scale = Vector(0.45, 0.45, 0.08)
+            scale = Vector(0.45, 0.45, 0.08),
+            spinSpeed = 1,
+            minScaleFactor = 0.75,
+            maxScaleFactor = 2,
+            inputScale = 0.02,
+            scaleLogFactor = 0.25
         },
 
         head = {
@@ -71,10 +80,19 @@ local DebugVisualizer = {
             scaleLogFactor = 0.7
         },
 
-        axes = {
-            { axis = "x", color = Color(255, 80, 80, 255), direction = 1, spinSpeed = 1 },
-            { axis = "y", color = Color(80, 255, 80, 255), direction = -1, spinSpeed = 1 },
-            { axis = "z", color = Color(80, 160, 255, 255), direction = 1, spinSpeed = 1 }
+        spear = {
+            lengthFactor = 2.4,
+            thickness = 1,
+            shaft = {
+                model = "models/xqm/cylinderx1.mdl",
+                forwardAxis = "x",
+                radius = 0.045
+            },
+            head = {
+                model = "models/hunter/misc/cone2x2.mdl",
+                forwardAxis = "z",
+                localScale = Vector(0.045, 0.045, 0.045)
+            }
         }
     }
 }

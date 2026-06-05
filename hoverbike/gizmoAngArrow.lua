@@ -1,24 +1,44 @@
 local GizmoAngArrow = {}
 
-local ALIGN = {
-    x = {
-        x = Angle(0, 0, 0), y = Angle(0, 90, 0), z = Angle(-90, 0, 0),
-        ["-x"] = Angle(0, 180, 0), ["-y"] = Angle(0, -90, 0), ["-z"] = Angle(90, 0, 0)
-    },
-    y = {
-        x = Angle(0, -90, 0), y = Angle(0, 0, 0), z = Angle(0, 0, 90),
-        ["-x"] = Angle(0, 90, 0), ["-y"] = Angle(0, 180, 0), ["-z"] = Angle(0, 0, -90)
-    },
-    z = {
-        x = Angle(90, 0, 0), y = Angle(0, 0, -90), z = Angle(0, 0, 0),
-        ["-x"] = Angle(-90, 0, 0), ["-y"] = Angle(0, 0, 90), ["-z"] = Angle(180, 0, 0)
-    }
-}
+local modelBounds = {}
 
 local function remove(holo)
     if holo and holo:isValid() then
         holo:remove()
     end
+end
+
+local function magnitude(vec)
+    if not vec then return 0 end
+    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+end
+
+local function normalized(vec, len)
+    len = len or magnitude(vec)
+    if len <= 0.0001 then return nil end
+    return vec / len
+end
+
+local function desaturate(value, gray, saturation)
+    return gray + (value - gray) * saturation
+end
+
+local function directionColor(dir, fallback, saturation)
+    fallback = fallback or Color(255, 255, 255, 255)
+    saturation = saturation or 1
+    if not dir then return fallback end
+
+    local r = math.abs(dir.x) * 255
+    local g = math.abs(dir.y) * 255
+    local b = math.abs(dir.z) * 255
+    local gray = (r + g + b) / 3
+
+    return Color(
+        math.floor(desaturate(r, gray, saturation)),
+        math.floor(desaturate(g, gray, saturation)),
+        math.floor(desaturate(b, gray, saturation)),
+        fallback.a or 255
+    )
 end
 
 local function axisInfo(axisName)
@@ -37,75 +57,57 @@ local function axisInfo(axisName)
     return component, sign
 end
 
-local function dirFor(axisName)
-    local axis, sign = axisInfo(axisName)
-    if axis == "x" then return Vector(sign, 0, 0) end
-    if axis == "y" then return Vector(0, sign, 0) end
-    return Vector(0, 0, sign)
-end
-
 local function component(vec, axisName)
     if axisName == "x" then return vec.x end
     if axisName == "y" then return vec.y end
     return vec.z
 end
 
-local function signedComponent(vec, axisName)
-    if not vec then return nil end
+local function boundsFor(model)
+    if modelBounds[model] then return modelBounds[model] end
 
-    local axis, sign = axisInfo(axisName)
-    return component(vec, axis) * sign
+    local probe = hologram.create(Vector(), Angle(), model, Vector(1, 1, 1))
+    local mins, maxs = probe:getModelBounds()
+    modelBounds[model] = {
+        mins = mins,
+        maxs = maxs,
+        size = maxs - mins
+    }
+
+    remove(probe)
+    return modelBounds[model]
 end
 
-local function vectorMagnitude(vec)
-    if not vec then return 0 end
-    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
-end
-
-local function flipAxis(axisName)
-    if string.sub(axisName, 1, 1) == "-" then return string.sub(axisName, 2) end
-    return "-" .. axisName
-end
-
-local function angleFromAxis(localAxisName, worldAxisName)
-    local localAxis, localSign = axisInfo(localAxisName)
-    local target = localSign > 0 and worldAxisName or flipAxis(worldAxisName)
-    local angle = ALIGN[localAxis][target]
-
-    if not angle then
-        error("Unsupported axis alignment: " .. tostring(localAxisName) .. " to " .. tostring(worldAxisName))
-    end
-
-    return angle
-end
-
-local function basisFor(axisName)
-    local axis = axisInfo(axisName)
-    local normal = dirFor(axisName)
-    local first
+local function forwardPoint(part, bounds, t)
+    local axis, sign = axisInfo(part.forwardAxis)
+    local point = (bounds.mins + bounds.maxs) * 0.5
+    local min = component(bounds.mins, axis)
+    local max = component(bounds.maxs, axis)
+    local value = sign > 0 and min + (max - min) * t or max - (max - min) * t
 
     if axis == "x" then
-        first = Vector(0, 1, 0)
+        point.x = value
     elseif axis == "y" then
-        first = Vector(0, 0, 1)
+        point.y = value
     else
-        first = Vector(1, 0, 0)
+        point.z = value
     end
 
-    return normal, first, normal:cross(first)
+    return point
 end
 
-local function radialFor(first, second, degrees)
-    local radians = math.rad(degrees)
-    return first * math.cos(radians) + second * math.sin(radians)
+local function forwardSpan(part, bounds)
+    local axis = axisInfo(part.forwardAxis)
+    return math.abs(component(bounds.size, axis))
 end
 
-local function tangentFor(normal, radial, direction)
-    return normal:cross(radial) * direction
-end
+local function scaleAlongForward(part, bounds, length, crossScale)
+    local axis = axisInfo(part.forwardAxis)
+    local along = length / math.max(forwardSpan(part, bounds), 0.001)
 
-local function directionSign(direction)
-    return (direction or 1) < 0 and -1 or 1
+    if axis == "x" then return Vector(along, crossScale, crossScale) end
+    if axis == "y" then return Vector(crossScale, along, crossScale) end
+    return Vector(crossScale, crossScale, along)
 end
 
 local function clamped(value, min, max)
@@ -114,25 +116,64 @@ local function clamped(value, min, max)
     return value
 end
 
-local function directionFor(axis, value)
-    if value and value ~= 0 then
-        return value < 0 and -1 or 1
-    end
-
-    return directionSign(axis.direction)
+local function logScaled(base, factor, inputScale, inputMagnitude)
+    return base + math.log(1 + inputMagnitude * inputScale) * factor
 end
 
-local function logScaleFactor(head, magnitude)
-    local minScaleFactor = head.minScaleFactor or 1
-    local maxScaleFactor = head.maxScaleFactor
-    local inputScale = head.inputScale or 1
-    local scaleLogFactor = head.scaleLogFactor or 0
-
+local function scaleFactor(config, inputMagnitude)
     return clamped(
-        minScaleFactor + math.log(1 + magnitude * inputScale) * scaleLogFactor,
-        minScaleFactor,
-        maxScaleFactor
+        logScaled(config.minScaleFactor or 1, config.scaleLogFactor or 0, config.inputScale or 1, inputMagnitude),
+        config.minScaleFactor,
+        config.maxScaleFactor
     )
+end
+
+local function perpendicularTo(dir)
+    local reference = math.abs(dir.z) < 0.95 and Vector(0, 0, 1) or Vector(0, 1, 0)
+    local perpendicular = reference:cross(dir)
+    return normalized(perpendicular) or Vector(1, 0, 0)
+end
+
+local function radialFor(first, second, degrees)
+    local radians = math.rad(degrees)
+    return first * math.cos(radians) + second * math.sin(radians)
+end
+
+local function basisFor(normal, phase)
+    local first = perpendicularTo(normal)
+    local second = normal:cross(first)
+
+    if phase == 0 then return first, second end
+
+    first = radialFor(first, second, phase)
+    second = normal:cross(first)
+    return first, second
+end
+
+local function angleFor(part, dir)
+    local axis, sign = axisInfo(part.forwardAxis)
+    local forward = sign > 0 and dir or dir * -1
+
+    if axis == "x" then
+        return forward:getAngle()
+    end
+
+    if axis == "z" then
+        return perpendicularTo(forward):getAngleEx(forward)
+    end
+
+    error("Arbitrary-vector alignment currently supports local X or Z forward axes only")
+end
+
+local function scaledOffset(point, scale, angle)
+    local offset = Vector(point.x * scale.x, point.y * scale.y, point.z * scale.z)
+    offset:rotate(angle)
+    return offset
+end
+
+local function positionAtBase(anchor, part, bounds, scale, angle)
+    local offset = scaledOffset(forwardPoint(part, bounds, 0), scale, angle)
+    return anchor - offset
 end
 
 local function ensureHolo(owner, key, model)
@@ -150,6 +191,18 @@ local function ensureHolo(owner, key, model)
     return owner[key]
 end
 
+local function ensureUnclippedHolo(owner, key, model)
+    local clipKey = key .. "UsesClip"
+    if owner[clipKey] ~= false then
+        remove(owner[key])
+        owner[key] = nil
+        owner[key .. "Model"] = nil
+        owner[clipKey] = false
+    end
+
+    return ensureHolo(owner, key, model)
+end
+
 local function place(holo, pos, angle, scale, color)
     holo:setPos(pos)
     holo:setAngles(angle)
@@ -157,68 +210,105 @@ local function place(holo, pos, angle, scale, color)
     holo:setColor(color)
 end
 
-local function ringAngle(ring, axisName, normal, phase)
-    local angle = angleFromAxis(ring.normalAxis, axisName):clone()
-    angle:rotateAroundAxis(normal, phase)
-    return angle
+local function ringScale(ring, factor)
+    local scale = ring.scale or Vector(1, 1, 1)
+    return Vector(scale.x * factor, scale.y * factor, scale.z)
 end
 
-local function headAngle(head, radial, tangent)
-    if head.forwardAxis == "z" then
-        return radial:getAngleEx(tangent)
-    end
-
-    if head.forwardAxis == "x" then
-        return tangent:getAngle()
-    end
-
-    error("Unsupported angular arrow head axis: " .. tostring(head.forwardAxis))
-end
-
-local function cleanupExtraHeads(axis, count)
-    local oldCount = axis.headCount or 0
+local function cleanupHeads(gizmo, count)
+    local oldCount = gizmo.headCount or 0
     for index = count + 1, oldCount do
         local key = "head" .. index
-        remove(axis[key])
-        axis[key] = nil
-        axis[key .. "Model"] = nil
+        remove(gizmo[key])
+        gizmo[key] = nil
+        gizmo[key .. "Model"] = nil
     end
-    axis.headCount = count
+    gizmo.headCount = count
 end
 
-local function updateRing(gizmo, axis, origin, input)
-    local ring = gizmo.ring
+local function cleanupVisuals(gizmo)
+    remove(gizmo.ring)
+    remove(gizmo.spearShaft)
+    remove(gizmo.spearHead)
+    gizmo.ring = nil
+    gizmo.spearShaft = nil
+    gizmo.spearHead = nil
+    gizmo.ringModel = nil
+    gizmo.spearShaftModel = nil
+    gizmo.spearHeadModel = nil
+    gizmo.spearShaftUsesClip = nil
+
+    cleanupHeads(gizmo, 0)
+    gizmo.headCount = nil
+end
+
+local function updateRing(gizmo, origin, dir, inputMagnitude, color)
+    local ring = gizmo.ringConfig
     local head = gizmo.head
-    local normal, first, second = basisFor(axis.axis)
-    local value = signedComponent(input, axis.axis)
-    local magnitude = vectorMagnitude(input)
-    local direction = directionFor(axis, value)
-    local phase = timer.curtime() * (axis.spinSpeed or 0) * direction
+    local factor = scaleFactor(ring, inputMagnitude)
+    local phase = timer.curtime() * (ring.spinSpeed or 0)
+    local first, second = basisFor(dir, phase)
+    local ringRadius = (ring.radius or 0) * factor
     local headCount = head.count or 4
-    local currentHeadScale = head.localScale * logScaleFactor(head, magnitude)
+    local headScale = head.localScale * scaleFactor(head, inputMagnitude)
 
     place(
-        ensureHolo(axis, "ring", ring.model),
+        ensureHolo(gizmo, "ring", ring.model),
         origin,
-        ringAngle(ring, axis.axis, normal, phase),
-        ring.scale,
-        axis.color
+        angleFor(ring, dir),
+        ringScale(ring, factor),
+        color
     )
 
-    cleanupExtraHeads(axis, headCount)
+    cleanupHeads(gizmo, headCount)
     for index = 1, headCount do
-        local degrees = phase + (index - 1) * 360 / headCount
+        local degrees = (index - 1) * 360 / headCount
         local radial = radialFor(first, second, degrees)
-        local tangent = tangentFor(normal, radial, direction)
+        local tangent = dir:cross(radial)
 
         place(
-            ensureHolo(axis, "head" .. index, head.model),
-            origin + radial * (ring.radius or 0),
-            headAngle(head, radial, tangent),
-            currentHeadScale,
-            axis.color
+            ensureHolo(gizmo, "head" .. index, head.model),
+            origin + radial * ringRadius,
+            angleFor(head, tangent),
+            headScale,
+            color
         )
     end
+end
+
+local function updateSpear(gizmo, origin, dir, inputMagnitude, color)
+    local spear = gizmo.spear
+    local shaft = spear.shaft
+    local head = spear.head
+    local shaftBounds = boundsFor(shaft.model)
+    local headBounds = boundsFor(head.model)
+    local ringFactor = scaleFactor(gizmo.ringConfig, inputMagnitude)
+    local length = (spear.length or ((gizmo.ringConfig.radius or 0) * (spear.lengthFactor or 2.4))) * ringFactor
+    local halfLength = length * 0.5
+    local thickness = (spear.thickness or 1) * ringFactor
+    local shaftAngle = angleFor(shaft, dir)
+    local headAngle = angleFor(head, dir)
+    local shaftScale = scaleAlongForward(shaft, shaftBounds, length, (shaft.radius or 0.05) * thickness)
+    local headScale = head.localScale * thickness
+    local shaftStart = origin - dir * halfLength
+    local shaftEnd = origin + dir * halfLength
+    local shaftHolo = ensureUnclippedHolo(gizmo, "spearShaft", shaft.model)
+
+    place(
+        shaftHolo,
+        positionAtBase(shaftStart, shaft, shaftBounds, shaftScale, shaftAngle),
+        shaftAngle,
+        shaftScale,
+        color
+    )
+
+    place(
+        ensureHolo(gizmo, "spearHead", head.model),
+        positionAtBase(shaftEnd, head, headBounds, headScale, headAngle),
+        headAngle,
+        headScale,
+        color
+    )
 end
 
 function GizmoAngArrow.update(gizmo, origin, input)
@@ -227,26 +317,20 @@ function GizmoAngArrow.update(gizmo, origin, input)
         return
     end
 
-    for _, axis in ipairs(gizmo.axes) do
-        updateRing(gizmo, axis, origin, input)
+    local inputMagnitude = magnitude(input)
+    local dir = normalized(input, inputMagnitude)
+    if not dir or inputMagnitude <= (gizmo.deadzone or 0) then
+        cleanupVisuals(gizmo)
+        return
     end
+
+    local color = gizmo.colorByDirection and directionColor(dir, gizmo.color, gizmo.colorSaturation) or gizmo.color
+    updateRing(gizmo, origin, dir, inputMagnitude, color)
+    updateSpear(gizmo, origin, dir, inputMagnitude, color)
 end
 
 function GizmoAngArrow.cleanup(gizmo)
-    for _, axis in ipairs(gizmo.axes) do
-        remove(axis.ring)
-        axis.ring = nil
-        axis.ringModel = nil
-
-        local headCount = axis.headCount or gizmo.head.count or 4
-        for index = 1, headCount do
-            local key = "head" .. index
-            remove(axis[key])
-            axis[key] = nil
-            axis[key .. "Model"] = nil
-        end
-        axis.headCount = nil
-    end
+    cleanupVisuals(gizmo)
 end
 
 return GizmoAngArrow
