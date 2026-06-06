@@ -68,9 +68,7 @@ function DriveControl.apply(ent, propsRegistry, input, mass, inertia)
     local force = DriveControl.getForce(ent, input, mass)
     local torque = DriveControl.getYawTorque(ent, input, inertia)
 
-    if magnitude(force) > DriveControl.MIN_FORCE then
-        ent:applyForceOffset(force, RigidbodyControl.getCenterOfMass(ent, propsRegistry))
-    end
+    force = RigidbodyControl.applyLinearForce(ent, propsRegistry, force)
 
     if magnitude(torque) > DriveControl.MIN_TORQUE then
         ent:applyTorque(torque)

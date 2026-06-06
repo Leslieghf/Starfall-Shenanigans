@@ -1,5 +1,11 @@
 local RigidbodyControl = {}
 
+RigidbodyControl.MIN_FORCE = 0.001
+
+local function magnitude(vec)
+    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
+end
+
 function RigidbodyControl.getMass(propsRegistry)
     local totalMass = 0
 
@@ -51,6 +57,26 @@ function RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
     
     if totalMass == 0 then return nil end
     return weightedPos / totalMass
+end
+
+function RigidbodyControl.applyLinearForce(chipEnt, propsRegistry, force)
+    local comPos = RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
+    if magnitude(force) <= RigidbodyControl.MIN_FORCE then return Vector(), comPos end
+
+    local totalMass = RigidbodyControl.getMass(propsRegistry)
+    if not totalMass then return Vector(), comPos end
+
+    local totalApplied = Vector()
+
+    for _, prop in pairs(propsRegistry) do
+        local ent = prop.ent
+        local share = force * (ent:getMass() / totalMass)
+
+        ent:applyForceOffset(share, ent:getPos())
+        totalApplied = totalApplied + share
+    end
+
+    return totalApplied, comPos
 end
 
 return RigidbodyControl

@@ -40,10 +40,8 @@ end
 
 function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, springForce, dampingForce)
     local force = gravityCompensationForce + springForce + dampingForce
-    local comPos = RigidbodyControl.getCenterOfMass(ent, propsRegistry)
-    
-    ent:applyForceOffset(force, comPos)
-    return force, comPos
+
+    return RigidbodyControl.applyLinearForce(ent, propsRegistry, force)
 end
 
 function VelControl.debugPrint(tr, height, targetHeight, velZ, mass, gravityForce, springForce, dampingForce, totalForce)

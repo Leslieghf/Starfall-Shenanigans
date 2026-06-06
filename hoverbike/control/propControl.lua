@@ -5,6 +5,23 @@ local Utils = require("../utils.lua")
 local PropControl = {}
 
 PropControl.Registry = {}
+PropControl.TEST_TOWER_MODEL = "models/props_c17/oildrum001.mdl"
+PropControl.TEST_TOWER_COUNT = 5
+PropControl.TEST_TOWER_BASE_Z = 45
+PropControl.TEST_TOWER_SPACING_Z = 64
+
+local function addTestTower(chipEnt)
+    local basePos = chipEnt:getPos()
+    local ang = chipEnt:getAngles()
+
+    for i = 1, PropControl.TEST_TOWER_COUNT do
+        local pos = basePos + Vector(0, 0, PropControl.TEST_TOWER_BASE_Z + (i - 1) * PropControl.TEST_TOWER_SPACING_Z)
+        local drum = prop.create(pos, ang, PropControl.TEST_TOWER_MODEL, false)
+
+        constraint.weld(drum, chipEnt)
+        PropControl.addPropToRegistry(drum, "testTower" .. i)
+    end
+end
 
 function PropControl.startup()
     -- Chip
@@ -20,6 +37,8 @@ function PropControl.startup()
     constraint.weld(seat, chip)
     -- constraint.keepupright(seat, Angle(90, 0, 0), 0, 0)
     PropControl.addPropToRegistry(seat, "seat")
+
+    -- addTestTower(chip)
 end
 
 function PropControl.addPropToRegistry(ent, name)
