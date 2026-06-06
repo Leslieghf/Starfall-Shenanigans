@@ -19,7 +19,7 @@ local function axis(ply, positiveKey, negativeKey)
 end
 
 function InputControl.getPilot(propControl)
-    local seat = propControl.Registry.seat and propControl.Registry.seat.ent
+    local seat = propControl.PhysicalRegistry.seat and propControl.PhysicalRegistry.seat.ent
     local ply = owner()
 
     if not seat or not seat:isValid() then return nil end

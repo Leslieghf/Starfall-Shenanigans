@@ -2,7 +2,6 @@
 --@server
 --@model models/hunter/plates/plate1x2.mdl
 --@include control/propControl.lua
---@include control/rigidbodyControl.lua
 --@include control/velControl.lua
 --@include control/angvelControl.lua
 --@include control/manualControl.lua
@@ -15,7 +14,6 @@
 --@include debug/debugVisualizer.lua
 
 local PropControl = require("control/propControl.lua")
-local RigidbodyControl = require("control/rigidbodyControl.lua")
 local VelControl = require("control/velControl.lua")
 local AngVelControl = require("control/angvelControl.lua")
 local ManualControl = require("control/manualControl.lua")
@@ -30,6 +28,8 @@ end
 
 local function update()
     local ent = chip()
+    PropControl.update(ent)
+
     local manualControlActive = ManualControl.isActive()
 
     if ManualControl.consumeEndedTransition(manualControlActive) then
@@ -45,8 +45,9 @@ local function update()
 
     local pos = ent:getPos()
     local vel = ent:getVelocity()
-    local totalMass = RigidbodyControl.getMass(PropControl.Registry)
-    local totalInertia = RigidbodyControl.getTotalInertia(PropControl.Registry)
+    local totalMass = PropControl.getMass()
+    local totalInertia = PropControl.getTotalInertia()
+    local centerOfMass = PropControl.getCenterOfMass(ent)
     local input = InputControl.read(PropControl)
     local tr = PropControl.getHeightTrace(pos)
     local height = PropControl.getHeight(tr, pos)
@@ -64,16 +65,16 @@ local function update()
 
         appliedForce = VelControl.applyForce(
             ent,
-            PropControl.Registry,
             gravityForce,
             springForce,
-            dampingForce
+            dampingForce,
+            centerOfMass
         )
     end
 
     VelControl.debugPrint(tr, height, targetHeight, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
 
-    local driveForce, driveTorque = DriveControl.apply(ent, PropControl.Registry, input, totalMass, totalInertia)
+    local driveForce, driveTorque = DriveControl.apply(ent, input, totalMass, totalInertia, centerOfMass)
     appliedForce = appliedForce + driveForce
     appliedTorque = appliedTorque + driveTorque
 
@@ -104,6 +105,12 @@ hook.add("EntityRemoved", "HoverbikeCleaning", function(ent)
 
     if ent == chip() then
         DebugVisualizer.cleanup()
+    end
+end)
+
+hook.add("OnPlayerPhysicsPickup", "HoverbikeDecorativePhysicsPickup", function(ply, ent)
+    if PropControl.isDecorativeProp(ent) then
+        ent:setFrozen(true)
     end
 end)
 

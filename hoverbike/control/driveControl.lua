@@ -64,11 +64,11 @@ function DriveControl.getYawTorque(ent, input, inertia)
     return localInertiaTorqueToWorld(ent, inertia, localYawAxis, DriveControl.YAW_FACTOR) * torqueDt()
 end
 
-function DriveControl.apply(ent, propsRegistry, input, mass, inertia)
+function DriveControl.apply(ent, input, mass, inertia, comPos)
     local force = DriveControl.getForce(ent, input, mass)
     local torque = DriveControl.getYawTorque(ent, input, inertia)
 
-    force = RigidbodyControl.applyLinearForce(ent, propsRegistry, force)
+    force = RigidbodyControl.applyLinearForce(ent, force, comPos)
 
     if magnitude(torque) > DriveControl.MIN_TORQUE then
         ent:applyTorque(torque)

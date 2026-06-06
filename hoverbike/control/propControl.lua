@@ -1,60 +1,166 @@
 --@include ../utils.lua
+--@include ../pipeline.lua
+--@include ../cache.lua
 
 local Utils = require("../utils.lua")
+local Pipeline = require("../pipeline.lua")
+local Cache = require("../cache.lua")
 
 local PropControl = {}
 
-PropControl.Registry = {}
-PropControl.TEST_TOWER_MODEL = "models/props_c17/oildrum001.mdl"
-PropControl.TEST_TOWER_COUNT = 5
-PropControl.TEST_TOWER_BASE_Z = 45
-PropControl.TEST_TOWER_SPACING_Z = 64
+PropControl.PhysicalRegistry = {}
+PropControl.DecorativeRegistry = {}
+PropControl.TEST_SPHERE_MODEL = "models/props_c17/oildrum001.mdl"
+PropControl.TEST_SPHERE_COUNT = 20
+PropControl.TEST_SPHERE_RADIUS = 50
+PropControl.TEST_SPHERE_MAX_POLAR_DEGREES = 85
+PropControl.SpawnPipeline = Pipeline.new("prop_spawns")
 
-local function addTestTower(chipEnt)
-    local basePos = chipEnt:getPos()
+local function buildPhysicalProperties(chipEnt)
+    local totalMass = 0
+    local totalInertia = Vector()
+    local weightedLocalPos = Vector()
+
+    for _, prop in pairs(PropControl.PhysicalRegistry) do
+        local ent = prop.ent
+        local mass = ent:getMass()
+
+        totalMass = totalMass + mass
+        totalInertia = totalInertia + ent:getInertia()
+        weightedLocalPos = weightedLocalPos + chipEnt:worldToLocal(ent:getPos()) * mass
+    end
+
+    if totalMass == 0 then return {} end
+
+    return {
+        mass = totalMass,
+        inertia = totalInertia,
+        localCenterOfMass = weightedLocalPos / totalMass
+    }
+end
+
+PropControl.PhysicalPropertiesCache = Cache.new(
+    buildPhysicalProperties,
+    Utils.PHYSICAL_PROPERTIES_REFRESH_INTERVAL
+)
+
+function PropControl.spawn(pos, ang, model, frozen, complete)
+    PropControl.SpawnPipeline:enqueue(
+        function()
+            return prop.create(pos, ang, model, frozen)
+        end,
+        complete
+    )
+end
+
+function PropControl.spawnSeat(pos, ang, model, frozen, complete)
+    PropControl.SpawnPipeline:enqueue(
+        function()
+            return prop.createSeat(pos, ang, model, frozen)
+        end,
+        complete
+    )
+end
+
+function PropControl.update(chipEnt)
+    PropControl.SpawnPipeline:processWhile(prop.canSpawn)
+
+    if PropControl.PhysicalPropertiesCache:shouldRefresh() then
+        PropControl.PhysicalPropertiesCache:refresh(chipEnt)
+    end
+end
+
+local function randomUpperSphereDirection()
+    local minZ = math.cos(math.rad(PropControl.TEST_SPHERE_MAX_POLAR_DEGREES))
+    local z = minZ + math.random() * (1 - minZ)
+    local phi = math.random() * math.pi * 2
+    local xy = math.sqrt(1 - z * z)
+
+    return Vector(math.cos(phi) * xy, math.sin(phi) * xy, z)
+end
+
+local function addTestSphere(chipEnt)
+    local center = chipEnt:getPos()
     local ang = chipEnt:getAngles()
 
-    for i = 1, PropControl.TEST_TOWER_COUNT do
-        local pos = basePos + Vector(0, 0, PropControl.TEST_TOWER_BASE_Z + (i - 1) * PropControl.TEST_TOWER_SPACING_Z)
-        local drum = prop.create(pos, ang, PropControl.TEST_TOWER_MODEL, false)
+    for i = 1, PropControl.TEST_SPHERE_COUNT do
+        local direction = randomUpperSphereDirection()
+        local pos = center + direction * PropControl.TEST_SPHERE_RADIUS
 
-        constraint.weld(drum, chipEnt)
-        PropControl.addPropToRegistry(drum, "testTower" .. i)
+        PropControl.spawn(pos, ang, PropControl.TEST_SPHERE_MODEL, false, function(drum)
+            drum:setParent(chipEnt)
+            PropControl.addDecorativeProp(drum)
+        end)
     end
 end
 
 function PropControl.startup()
     -- Chip
     local chip = chip()
-    PropControl.addPropToRegistry(chip, "chip")
+    PropControl.addPhysicalProp(chip, "chip")
 
     -- Seat
     local seatPos = chip:getPos() + Vector(0, 0, 11)
     local seatAng = chip:getAngles()
     local seatModel = "models/props_phx/carseat3.mdl"
     local seatFrozen = true
-    local seat = prop.createSeat(seatPos, seatAng, seatModel, seatFrozen)
-    constraint.weld(seat, chip)
-    -- constraint.keepupright(seat, Angle(90, 0, 0), 0, 0)
-    PropControl.addPropToRegistry(seat, "seat")
+    PropControl.spawnSeat(seatPos, seatAng, seatModel, seatFrozen, function(seat)
+        constraint.weld(seat, chip)
+        PropControl.addPhysicalProp(seat, "seat")
+    end)
 
-    -- addTestTower(chip)
+    addTestSphere(chip)
 end
 
-function PropControl.addPropToRegistry(ent, name)
-    PropControl.Registry[name] = {ent = ent}
+function PropControl.addPhysicalProp(ent, name)
+    PropControl.PhysicalRegistry[name] = {ent = ent}
+    PropControl.PhysicalPropertiesCache:invalidate()
 end
 
-function PropControl.isRegisteredProp(ent)
-    for _, data in pairs(PropControl.Registry) do
-        if ent == data.ent then return true end
+function PropControl.addDecorativeProp(ent)
+    ent:disablePhysgun(true)
+    ent:setFrozen(true)
+    table.insert(PropControl.DecorativeRegistry, ent)
+end
+
+function PropControl.getPhysicalProperties()
+    return PropControl.PhysicalPropertiesCache:get()
+end
+
+function PropControl.getMass()
+    return PropControl.getPhysicalProperties().mass
+end
+
+function PropControl.getTotalInertia()
+    return PropControl.getPhysicalProperties().inertia
+end
+
+function PropControl.getCenterOfMass(chipEnt)
+    local localCenterOfMass = PropControl.getPhysicalProperties().localCenterOfMass
+    if not localCenterOfMass then return nil end
+
+    return chipEnt:localToWorld(localCenterOfMass)
+end
+
+function PropControl.isPhysicalProp(ent)
+    for _, physicalProp in pairs(PropControl.PhysicalRegistry) do
+        if ent == physicalProp.ent then return true end
+    end
+
+    return false
+end
+
+function PropControl.isDecorativeProp(ent)
+    for _, decorativeProp in ipairs(PropControl.DecorativeRegistry) do
+        if ent == decorativeProp then return true end
     end
 
     return false
 end
 
 function PropControl.shouldHitHeightTrace(ent)
-    if PropControl.isRegisteredProp(ent) then return false end
+    if PropControl.isPhysicalProp(ent) then return false end
+    if PropControl.isDecorativeProp(ent) then return false end
     if ent:isPlayer() or ent:isWeapon() or ent:isNPC() or ent:isVehicle() or ent:isNextBot() then return false end
 
     return true

@@ -59,24 +59,12 @@ function RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
     return weightedPos / totalMass
 end
 
-function RigidbodyControl.applyLinearForce(chipEnt, propsRegistry, force)
-    local comPos = RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
+function RigidbodyControl.applyLinearForce(chipEnt, force, comPos)
     if magnitude(force) <= RigidbodyControl.MIN_FORCE then return Vector(), comPos end
 
-    local totalMass = RigidbodyControl.getMass(propsRegistry)
-    if not totalMass then return Vector(), comPos end
+    chipEnt:applyForceOffset(force, comPos or chipEnt:getPos())
 
-    local totalApplied = Vector()
-
-    for _, prop in pairs(propsRegistry) do
-        local ent = prop.ent
-        local share = force * (ent:getMass() / totalMass)
-
-        ent:applyForceOffset(share, ent:getPos())
-        totalApplied = totalApplied + share
-    end
-
-    return totalApplied, comPos
+    return force, comPos
 end
 
 return RigidbodyControl

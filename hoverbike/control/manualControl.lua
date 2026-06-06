@@ -9,7 +9,7 @@ local function keyFor(ent)
 end
 
 function ManualControl.isControlledPart(ent, propControl)
-    return ent and ent:isValid() and propControl.isRegisteredProp(ent)
+    return ent and ent:isValid() and propControl.isPhysicalProp(ent)
 end
 
 function ManualControl.pickup(ent)

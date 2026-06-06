@@ -38,10 +38,10 @@ function VelControl.getDampingForce(height, velZ, targetHeight, mass)
     return Vector(0, 0, dampingImpulsePerMass * mass)
 end
 
-function VelControl.applyForce(ent, propsRegistry, gravityCompensationForce, springForce, dampingForce)
+function VelControl.applyForce(ent, gravityCompensationForce, springForce, dampingForce, comPos)
     local force = gravityCompensationForce + springForce + dampingForce
 
-    return RigidbodyControl.applyLinearForce(ent, propsRegistry, force)
+    return RigidbodyControl.applyLinearForce(ent, force, comPos)
 end
 
 function VelControl.debugPrint(tr, height, targetHeight, velZ, mass, gravityForce, springForce, dampingForce, totalForce)
