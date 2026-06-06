@@ -1,9 +1,0 @@
-[deploy]
-destination = "/home/leslieghf/.local/share/Steam/steamapps/common/GarrysMod/garrysmod/data/starfall/starfall_shenanigans"
-folders = [
-    "basic_wire_entity_connection",
-    "hello_world",
-    "hoverbike",
-    "prop_voxel_builder",
-    "std",
-]
