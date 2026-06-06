@@ -1,6 +1,6 @@
---@include types.lua
+--@include starfall_shenanigans/hoverbike/props/registry/types.lua
 
-local RegistryTypes = require("types.lua")
+local RegistryTypes = require("starfall_shenanigans/hoverbike/props/registry/types.lua")
 
 local RegistryFunctions = {}
 

@@ -1,18 +1,18 @@
---@include functions.lua
---@include types.lua
---@include spawning/mod.lua
---@include registry/mod.lua
---@include physicalProperties/mod.lua
---@include seat/mod.lua
---@include testSphere/mod.lua
+--@include starfall_shenanigans/hoverbike/props/functions.lua
+--@include starfall_shenanigans/hoverbike/props/types.lua
+--@include starfall_shenanigans/hoverbike/props/spawning/mod.lua
+--@include starfall_shenanigans/hoverbike/props/registry/mod.lua
+--@include starfall_shenanigans/hoverbike/props/physical_properties/mod.lua
+--@include starfall_shenanigans/hoverbike/props/seat/mod.lua
+--@include starfall_shenanigans/hoverbike/props/test_sphere/mod.lua
 
-local Functions = require("functions.lua")
-local Types = require("types.lua")
-local Spawning = require("spawning/mod.lua")
-local Registry = require("registry/mod.lua")
-local PhysicalProperties = require("physicalProperties/mod.lua")
-local Seat = require("seat/mod.lua")
-local TestSphere = require("testSphere/mod.lua")
+local Functions = require("starfall_shenanigans/hoverbike/props/functions.lua")
+local Types = require("starfall_shenanigans/hoverbike/props/types.lua")
+local Spawning = require("starfall_shenanigans/hoverbike/props/spawning/mod.lua")
+local Registry = require("starfall_shenanigans/hoverbike/props/registry/mod.lua")
+local PhysicalProperties = require("starfall_shenanigans/hoverbike/props/physical_properties/mod.lua")
+local Seat = require("starfall_shenanigans/hoverbike/props/seat/mod.lua")
+local TestSphere = require("starfall_shenanigans/hoverbike/props/test_sphere/mod.lua")
 
 local Props = {
     Functions = Functions,

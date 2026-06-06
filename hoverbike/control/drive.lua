@@ -1,8 +1,8 @@
---@include rigidbody.lua
---@include ../../std/math/vector/mod.lua
+--@include starfall_shenanigans/hoverbike/control/rigidbody.lua
+--@include starfall_shenanigans/std/math/vector/mod.lua
 
-local Rigidbody = require("rigidbody.lua")
-local VectorMath = require("../../std/math/vector/mod.lua")
+local Rigidbody = require("starfall_shenanigans/hoverbike/control/rigidbody.lua")
+local VectorMath = require("starfall_shenanigans/std/math/vector/mod.lua")
 local Drive = {}
 
 Drive.FORWARD_ACCEL = 45

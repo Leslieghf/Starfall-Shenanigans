@@ -1,8 +1,8 @@
---@include functions.lua
---@include types.lua
+--@include starfall_shenanigans/hoverbike/props/physical_properties/functions.lua
+--@include starfall_shenanigans/hoverbike/props/physical_properties/types.lua
 
-local Functions = require("functions.lua")
-local Types = require("types.lua")
+local Functions = require("starfall_shenanigans/hoverbike/props/physical_properties/functions.lua")
+local Types = require("starfall_shenanigans/hoverbike/props/physical_properties/types.lua")
 
 local PhysicalProperties = {
     Functions = Functions,

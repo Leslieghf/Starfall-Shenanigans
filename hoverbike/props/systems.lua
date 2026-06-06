@@ -1,6 +1,6 @@
---@include mod.lua
+--@include starfall_shenanigans/hoverbike/props/mod.lua
 
-local Props = require("mod.lua")
+local Props = require("starfall_shenanigans/hoverbike/props/mod.lua")
 
 local Systems = {}
 

@@ -1,6 +1,6 @@
---@include ../../../std/schedules/mod.lua
+--@include starfall_shenanigans/std/schedules/mod.lua
 
-local StdSchedules = require("../../../std/schedules/mod.lua")
+local StdSchedules = require("starfall_shenanigans/std/schedules/mod.lua")
 
 local StartupSchedule = StdSchedules.newSchedule("startup")
 

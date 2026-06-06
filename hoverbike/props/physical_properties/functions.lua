@@ -1,12 +1,12 @@
---@include ../../../std/cache/mod.lua
---@include ../../constants.lua
---@include ../registry/mod.lua
---@include types.lua
+--@include starfall_shenanigans/std/cache/mod.lua
+--@include starfall_shenanigans/hoverbike/constants.lua
+--@include starfall_shenanigans/hoverbike/props/registry/mod.lua
+--@include starfall_shenanigans/hoverbike/props/physical_properties/types.lua
 
-local Cache = require("../../../std/cache/mod.lua")
-local Constants = require("../../constants.lua")
-local Registry = require("../registry/mod.lua")
-local PhysicalPropertiesTypes = require("types.lua")
+local Cache = require("starfall_shenanigans/std/cache/mod.lua")
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua")
+local Registry = require("starfall_shenanigans/hoverbike/props/registry/mod.lua")
+local PhysicalPropertiesTypes = require("starfall_shenanigans/hoverbike/props/physical_properties/types.lua")
 
 local PhysicalPropertiesFunctions = {}
 

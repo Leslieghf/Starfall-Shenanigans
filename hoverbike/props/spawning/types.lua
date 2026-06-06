@@ -1,6 +1,6 @@
---@include ../../../std/pipeline/mod.lua
+--@include starfall_shenanigans/std/pipeline/mod.lua
 
-local Pipeline = require("../../../std/pipeline/mod.lua")
+local Pipeline = require("starfall_shenanigans/std/pipeline/mod.lua")
 
 local SpawningTypes = {}
 

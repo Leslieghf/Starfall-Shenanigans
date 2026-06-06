@@ -1,6 +1,6 @@
---@include ../../std/math/vector/mod.lua
+--@include starfall_shenanigans/std/math/vector/mod.lua
 
-local VectorMath = require("../../std/math/vector/mod.lua")
+local VectorMath = require("starfall_shenanigans/std/math/vector/mod.lua")
 
 local Rigidbody = {}
 

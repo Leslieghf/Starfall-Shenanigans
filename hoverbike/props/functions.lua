@@ -1,10 +1,10 @@
---@include spawning/mod.lua
---@include registry/mod.lua
---@include physicalProperties/mod.lua
+--@include starfall_shenanigans/hoverbike/props/spawning/mod.lua
+--@include starfall_shenanigans/hoverbike/props/registry/mod.lua
+--@include starfall_shenanigans/hoverbike/props/physical_properties/mod.lua
 
-local Spawning = require("spawning/mod.lua")
-local Registry = require("registry/mod.lua")
-local PhysicalProperties = require("physicalProperties/mod.lua")
+local Spawning = require("starfall_shenanigans/hoverbike/props/spawning/mod.lua")
+local Registry = require("starfall_shenanigans/hoverbike/props/registry/mod.lua")
+local PhysicalProperties = require("starfall_shenanigans/hoverbike/props/physical_properties/mod.lua")
 
 local PropFunctions = {}
 

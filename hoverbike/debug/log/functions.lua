@@ -1,6 +1,6 @@
---@include ../../constants.lua
+--@include starfall_shenanigans/hoverbike/constants.lua
 
-local Constants = require("../../constants.lua")
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua")
 
 local LogFunctions = {}
 local printTimers = {}

@@ -1,8 +1,8 @@
---@include ../functions.lua
---@include constants.lua
+--@include starfall_shenanigans/hoverbike/props/functions.lua
+--@include starfall_shenanigans/hoverbike/props/seat/constants.lua
 
-local PropFunctions = require("../functions.lua")
-local SeatConstants = require("constants.lua")
+local PropFunctions = require("starfall_shenanigans/hoverbike/props/functions.lua")
+local SeatConstants = require("starfall_shenanigans/hoverbike/props/seat/constants.lua")
 
 local SeatFunctions = {}
 

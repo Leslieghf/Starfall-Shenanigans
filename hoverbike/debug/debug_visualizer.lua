@@ -1,10 +1,10 @@
---@include ../props/mod.lua
---@include debugLinArrow.lua
---@include debugAngArrow.lua
+--@include starfall_shenanigans/hoverbike/props/mod.lua
+--@include starfall_shenanigans/hoverbike/debug/debug_lin_arrow.lua
+--@include starfall_shenanigans/hoverbike/debug/debug_ang_arrow.lua
 
-local Props = require("../props/mod.lua")
-local DebugLinArrow = require("debugLinArrow.lua")
-local DebugAngArrow = require("debugAngArrow.lua")
+local Props = require("starfall_shenanigans/hoverbike/props/mod.lua")
+local DebugLinArrow = require("starfall_shenanigans/hoverbike/debug/debug_lin_arrow.lua")
+local DebugAngArrow = require("starfall_shenanigans/hoverbike/debug/debug_ang_arrow.lua")
 
 local DebugVisualizer = {
     enabled = true,

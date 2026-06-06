@@ -1,8 +1,8 @@
---@include ../functions.lua
---@include types.lua
+--@include starfall_shenanigans/hoverbike/props/functions.lua
+--@include starfall_shenanigans/hoverbike/props/test_sphere/types.lua
 
-local PropFunctions = require("../functions.lua")
-local TestSphereTypes = require("types.lua")
+local PropFunctions = require("starfall_shenanigans/hoverbike/props/functions.lua")
+local TestSphereTypes = require("starfall_shenanigans/hoverbike/props/test_sphere/types.lua")
 
 local TestSphereFunctions = {}
 

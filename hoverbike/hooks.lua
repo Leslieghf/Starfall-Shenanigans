@@ -1,6 +1,6 @@
---@include schedules/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/mod.lua
 
-local Schedules = require("schedules/mod.lua")
+local Schedules = require("starfall_shenanigans/hoverbike/schedules/mod.lua")
 
 local Hooks = {}
 

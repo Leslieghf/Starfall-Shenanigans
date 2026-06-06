@@ -1,6 +1,6 @@
---@include debugDraw.lua
+--@include starfall_shenanigans/hoverbike/debug/debug_draw.lua
 
-local Draw = require("debugDraw.lua")
+local Draw = require("starfall_shenanigans/hoverbike/debug/debug_draw.lua")
 local DebugAngArrow = {}
 
 local state = {}

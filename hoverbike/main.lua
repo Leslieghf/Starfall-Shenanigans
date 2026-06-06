@@ -1,7 +1,7 @@
 --@name Hoverbike
 --@server
 --@model models/hunter/plates/plate1x2.mdl
---@include hooks.lua
+--@include starfall_shenanigans/hoverbike/hooks.lua
 
 --[[
 Hoverbike executable entry point.
@@ -16,6 +16,6 @@ installation. Project behavior lives in domain modules:
 - ../std/lib.lua documents and exports reusable architecture primitives.
 ]]
 
-local Hooks = require("hooks.lua")
+local Hooks = require("starfall_shenanigans/hoverbike/hooks.lua")
 
 Hooks.install()

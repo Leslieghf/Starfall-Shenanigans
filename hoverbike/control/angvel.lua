@@ -1,8 +1,8 @@
---@include ../../std/math/scalar/mod.lua
---@include ../../std/math/vector/mod.lua
+--@include starfall_shenanigans/std/math/scalar/mod.lua
+--@include starfall_shenanigans/std/math/vector/mod.lua
 
-local ScalarMath = require("../../std/math/scalar/mod.lua")
-local VectorMath = require("../../std/math/vector/mod.lua")
+local ScalarMath = require("starfall_shenanigans/std/math/scalar/mod.lua")
+local VectorMath = require("starfall_shenanigans/std/math/vector/mod.lua")
 
 local AngVel = {}
 AngVel.UPRIGHT_FACTOR = 150.0

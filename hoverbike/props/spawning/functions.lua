@@ -1,6 +1,6 @@
---@include types.lua
+--@include starfall_shenanigans/hoverbike/props/spawning/types.lua
 
-local SpawningTypes = require("types.lua")
+local SpawningTypes = require("starfall_shenanigans/hoverbike/props/spawning/types.lua")
 
 local SpawningFunctions = {}
 

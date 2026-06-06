@@ -1,7 +1,7 @@
---@include cache/mod.lua
---@include math/mod.lua
---@include pipeline/mod.lua
---@include schedules/mod.lua
+--@include starfall_shenanigans/std/cache/mod.lua
+--@include starfall_shenanigans/std/math/mod.lua
+--@include starfall_shenanigans/std/pipeline/mod.lua
+--@include starfall_shenanigans/std/schedules/mod.lua
 
 --[[
 Std reusable library root.
@@ -10,6 +10,16 @@ This project is the non-executable side of the repo. It should not contain chip
 entry points, hooks, game-specific schedules, or hoverbike policy. It exports
 small reusable building blocks and documents the module structure used by the
 actual chip projects.
+
+Starfall module convention:
+
+- Use full Starfall data-root include/require paths without a leading slash.
+  Example shape: starfall_shenanigans/hoverbike/... or starfall_shenanigans/std/...
+- Reusable std modules are a sibling of hoverbike in the deployment root, so
+  hoverbike reaches them through starfall_shenanigans/std/...
+- Do not use bare runtime keys such as a plain functions.lua import. They can
+  be interpreted from the entrypoint context instead of the current module
+  directory.
 
 Project layout semantics:
 
@@ -40,9 +50,9 @@ Exported domains:
 
 local Std = {}
 
-Std.Cache = require("cache/mod.lua")
-Std.Math = require("math/mod.lua")
-Std.Pipeline = require("pipeline/mod.lua")
-Std.Schedules = require("schedules/mod.lua")
+Std.Cache = require("starfall_shenanigans/std/cache/mod.lua")
+Std.Math = require("starfall_shenanigans/std/math/mod.lua")
+Std.Pipeline = require("starfall_shenanigans/std/pipeline/mod.lua")
+Std.Schedules = require("starfall_shenanigans/std/schedules/mod.lua")
 
 return Std

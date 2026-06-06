@@ -1,8 +1,8 @@
---@include ../constants.lua
---@include ../../std/math/scalar/mod.lua
+--@include starfall_shenanigans/hoverbike/constants.lua
+--@include starfall_shenanigans/std/math/scalar/mod.lua
 
-local Constants = require("../constants.lua")
-local ScalarMath = require("../../std/math/scalar/mod.lua")
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua")
+local ScalarMath = require("starfall_shenanigans/std/math/scalar/mod.lua")
 local Height = {}
 
 Height.DOUBLE_TAP_WINDOW = 0.3

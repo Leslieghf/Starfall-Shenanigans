@@ -1,12 +1,12 @@
---@include ../constants.lua
---@include ../debug/log/mod.lua
---@include ../height/trace/mod.lua
---@include rigidbody.lua
+--@include starfall_shenanigans/hoverbike/constants.lua
+--@include starfall_shenanigans/hoverbike/debug/log/mod.lua
+--@include starfall_shenanigans/hoverbike/height/trace/mod.lua
+--@include starfall_shenanigans/hoverbike/control/rigidbody.lua
 
-local Constants = require("../constants.lua")
-local Log = require("../debug/log/mod.lua")
-local HeightTrace = require("../height/trace/mod.lua")
-local Rigidbody = require("rigidbody.lua")
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua")
+local Log = require("starfall_shenanigans/hoverbike/debug/log/mod.lua")
+local HeightTrace = require("starfall_shenanigans/hoverbike/height/trace/mod.lua")
+local Rigidbody = require("starfall_shenanigans/hoverbike/control/rigidbody.lua")
 
 local Vel = {}
 

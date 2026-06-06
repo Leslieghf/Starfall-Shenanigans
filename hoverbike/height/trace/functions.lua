@@ -1,8 +1,8 @@
---@include ../../constants.lua
---@include ../../props/registry/mod.lua
+--@include starfall_shenanigans/hoverbike/constants.lua
+--@include starfall_shenanigans/hoverbike/props/registry/mod.lua
 
-local Constants = require("../../constants.lua")
-local PropRegistry = require("../../props/registry/mod.lua")
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua")
+local PropRegistry = require("starfall_shenanigans/hoverbike/props/registry/mod.lua")
 
 local TraceFunctions = {}
 

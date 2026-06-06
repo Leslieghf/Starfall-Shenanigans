@@ -1,12 +1,12 @@
---@include mod.lua
---@include ../debug/mod.lua
---@include ../height/mod.lua
---@include ../props/mod.lua
+--@include starfall_shenanigans/hoverbike/control/mod.lua
+--@include starfall_shenanigans/hoverbike/debug/mod.lua
+--@include starfall_shenanigans/hoverbike/height/mod.lua
+--@include starfall_shenanigans/hoverbike/props/mod.lua
 
-local Control = require("mod.lua")
-local Debug = require("../debug/mod.lua")
-local Height = require("../height/mod.lua")
-local Props = require("../props/mod.lua")
+local Control = require("starfall_shenanigans/hoverbike/control/mod.lua")
+local Debug = require("starfall_shenanigans/hoverbike/debug/mod.lua")
+local Height = require("starfall_shenanigans/hoverbike/height/mod.lua")
+local Props = require("starfall_shenanigans/hoverbike/props/mod.lua")
 
 local Systems = {}
 

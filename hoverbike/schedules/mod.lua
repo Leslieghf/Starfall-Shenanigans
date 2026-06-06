@@ -1,26 +1,26 @@
---@include ../props/systems.lua
---@include ../control/systems.lua
---@include ../../std/schedules/mod.lua
---@include startup/mod.lua
---@include think/mod.lua
---@include entityRemoved/mod.lua
---@include playerDisconnected/mod.lua
---@include playerPhysicsPickup/mod.lua
---@include physgunPickup/mod.lua
---@include physgunDrop/mod.lua
+--@include starfall_shenanigans/hoverbike/props/systems.lua
+--@include starfall_shenanigans/hoverbike/control/systems.lua
+--@include starfall_shenanigans/std/schedules/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/startup/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/think/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/entity_removed/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/player_disconnected/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/player_physics_pickup/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/physgun_pickup/mod.lua
+--@include starfall_shenanigans/hoverbike/schedules/physgun_drop/mod.lua
 
-local PropSystems = require("../props/systems.lua")
-local ControlSystems = require("../control/systems.lua")
-local StdSchedules = require("../../std/schedules/mod.lua")
+local PropSystems = require("starfall_shenanigans/hoverbike/props/systems.lua")
+local ControlSystems = require("starfall_shenanigans/hoverbike/control/systems.lua")
+local StdSchedules = require("starfall_shenanigans/std/schedules/mod.lua")
 
 local Schedules = {
-    STARTUP = require("startup/mod.lua"),
-    THINK = require("think/mod.lua"),
-    ENTITY_REMOVED = require("entityRemoved/mod.lua"),
-    PLAYER_DISCONNECTED = require("playerDisconnected/mod.lua"),
-    PLAYER_PHYSICS_PICKUP = require("playerPhysicsPickup/mod.lua"),
-    PHYSGUN_PICKUP = require("physgunPickup/mod.lua"),
-    PHYSGUN_DROP = require("physgunDrop/mod.lua"),
+    STARTUP = require("starfall_shenanigans/hoverbike/schedules/startup/mod.lua"),
+    THINK = require("starfall_shenanigans/hoverbike/schedules/think/mod.lua"),
+    ENTITY_REMOVED = require("starfall_shenanigans/hoverbike/schedules/entity_removed/mod.lua"),
+    PLAYER_DISCONNECTED = require("starfall_shenanigans/hoverbike/schedules/player_disconnected/mod.lua"),
+    PLAYER_PHYSICS_PICKUP = require("starfall_shenanigans/hoverbike/schedules/player_physics_pickup/mod.lua"),
+    PHYSGUN_PICKUP = require("starfall_shenanigans/hoverbike/schedules/physgun_pickup/mod.lua"),
+    PHYSGUN_DROP = require("starfall_shenanigans/hoverbike/schedules/physgun_drop/mod.lua"),
     initialized = false
 }
 
