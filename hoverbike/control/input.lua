@@ -1,4 +1,4 @@
-local InputControl = {}
+local Input = {}
 
 local KEY = {
     JUMP = IN_KEY.JUMP,
@@ -18,8 +18,8 @@ local function axis(ply, positiveKey, negativeKey)
     return value
 end
 
-function InputControl.getPilot(propControl)
-    local seat = propControl.PhysicalRegistry.seat and propControl.PhysicalRegistry.seat.ent
+function Input.getPilot(props)
+    local seat = props.getPhysicalProp("seat")
     local ply = owner()
 
     if not seat or not seat:isValid() then return nil end
@@ -29,8 +29,8 @@ function InputControl.getPilot(propControl)
     return ply
 end
 
-function InputControl.read(propControl)
-    local pilot = InputControl.getPilot(propControl)
+function Input.read(props)
+    local pilot = Input.getPilot(props)
     if not pilot then
         return {
             active = false,
@@ -52,4 +52,4 @@ function InputControl.read(propControl)
     }
 end
 
-return InputControl
+return Input

@@ -5,4 +5,5 @@ folders = [
     "hello_world",
     "hoverbike",
     "prop_voxel_builder",
+    "std",
 ]

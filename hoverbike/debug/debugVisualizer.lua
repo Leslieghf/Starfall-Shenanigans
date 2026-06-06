@@ -1,8 +1,8 @@
---@include ../control/propControl.lua
+--@include ../props/mod.lua
 --@include debugLinArrow.lua
 --@include debugAngArrow.lua
 
-local PropControl = require("../control/propControl.lua")
+local Props = require("../props/mod.lua")
 local DebugLinArrow = require("debugLinArrow.lua")
 local DebugAngArrow = require("debugAngArrow.lua")
 
@@ -103,7 +103,7 @@ function DebugVisualizer.update(linInput, angInput)
     if now < DebugVisualizer.nextUpdateAt then return end
     DebugVisualizer.nextUpdateAt = now + DebugVisualizer.updateInterval
 
-    local origin = PropControl.getCenterOfMass(chipEnt) or chipEnt:getPos()
+    local origin = Props.getCenterOfMass(chipEnt) or chipEnt:getPos()
     DebugLinArrow.update(DebugVisualizer.linear, origin, linInput)
     DebugAngArrow.update(DebugVisualizer.angular, origin, angInput)
 end

@@ -1,0 +1,60 @@
+--@include rigidbody.lua
+--@include ../../std/math/vector/mod.lua
+
+local Rigidbody = require("rigidbody.lua")
+local VectorMath = require("../../std/math/vector/mod.lua")
+local Drive = {}
+
+Drive.FORWARD_ACCEL = 45
+Drive.BOOST_MULTIPLIER = 1.75
+Drive.YAW_FACTOR = 8000
+Drive.FORWARD_AXIS = Vector(0, 1, 0)
+Drive.MIN_FORCE = 0.001
+Drive.MIN_TORQUE = 0.001
+Drive.MAX_DT = 0.05
+Drive.LastTorqueAt = nil
+
+local function torqueDt()
+    local now = timer.curtime()
+    local dt = Drive.LastTorqueAt and now - Drive.LastTorqueAt or 0
+
+    Drive.LastTorqueAt = now
+    return math.min(dt, Drive.MAX_DT)
+end
+
+function Drive.resetState()
+    Drive.LastTorqueAt = nil
+end
+
+function Drive.getForce(ent, input, mass)
+    if not input.active then return Vector() end
+
+    local boost = input.boost and Drive.BOOST_MULTIPLIER or 1
+    local direction = VectorMath.horizontalLocalDirection(ent, Drive.FORWARD_AXIS, Drive.MIN_FORCE)
+
+    return direction * input.throttle * Drive.FORWARD_ACCEL * mass * boost
+end
+
+function Drive.getYawTorque(ent, input, inertia)
+    if not input.active then return Vector() end
+
+    local localYawAxis = Vector(0, 0, input.yaw)
+    if VectorMath.magnitude(localYawAxis) <= Drive.MIN_TORQUE then return Vector() end
+
+    return VectorMath.localInertiaTorqueToWorld(ent, inertia, localYawAxis, Drive.YAW_FACTOR) * torqueDt()
+end
+
+function Drive.apply(ent, input, mass, inertia, comPos)
+    local force = Drive.getForce(ent, input, mass)
+    local torque = Drive.getYawTorque(ent, input, inertia)
+
+    force = Rigidbody.applyLinearForce(ent, force, comPos)
+
+    if VectorMath.magnitude(torque) > Drive.MIN_TORQUE then
+        ent:applyTorque(torque)
+    end
+
+    return force, torque
+end
+
+return Drive

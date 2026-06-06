@@ -1,6 +1,6 @@
-local Cache = {}
+local CacheClasses = {}
 
-function Cache.new(init, refreshInterval)
+function CacheClasses.newCache(init, refreshInterval)
     local cache = {
         dirty = true,
         value = nil,
@@ -36,4 +36,4 @@ function Cache.new(init, refreshInterval)
     return cache
 end
 
-return Cache
+return CacheClasses

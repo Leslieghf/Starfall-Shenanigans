@@ -1,6 +1,6 @@
-local Pipeline = {}
+local PipelineClasses = {}
 
-function Pipeline.new(name, interval)
+function PipelineClasses.newPipeline(name, interval)
     local pipeline = {
         name = name,
         interval = interval,
@@ -68,4 +68,4 @@ function Pipeline.new(name, interval)
     return pipeline
 end
 
-return Pipeline
+return PipelineClasses

@@ -1,0 +1,13 @@
+local Constants = {}
+
+Constants.BASE_GRAVITY = 9.01352
+Constants.TARGET_HEIGHT = 100
+Constants.MIN_TARGET_HEIGHT = 0
+Constants.MAX_TARGET_HEIGHT = 5000
+Constants.HEIGHT_TRACE_LENGTH = Constants.MAX_TARGET_HEIGHT * 4
+Constants.INFLUENCE_FALLOFF_EXPONENT = 4
+Constants.LOOKAHEAD_TIME = 0.5
+Constants.PHYSICAL_PROPERTIES_REFRESH_INTERVAL = 0.25
+Constants.DEBUG_PRINT_INTERVAL = 15
+
+return Constants

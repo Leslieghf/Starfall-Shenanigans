@@ -1,12 +1,12 @@
-local RigidbodyControl = {}
+--@include ../../std/math/vector/mod.lua
 
-RigidbodyControl.MIN_FORCE = 0.001
+local VectorMath = require("../../std/math/vector/mod.lua")
 
-local function magnitude(vec)
-    return math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
-end
+local Rigidbody = {}
 
-function RigidbodyControl.getMass(propsRegistry)
+Rigidbody.MIN_FORCE = 0.001
+
+function Rigidbody.getMass(propsRegistry)
     local totalMass = 0
 
     for _, prop in pairs(propsRegistry) do
@@ -17,7 +17,7 @@ function RigidbodyControl.getMass(propsRegistry)
     return totalMass
 end
 
-function RigidbodyControl.getAverageAngleVelocity(propsRegistry)
+function Rigidbody.getAverageAngleVelocity(propsRegistry)
     local totalMass = 0
     local weightedAngVel = Vector()
 
@@ -31,7 +31,7 @@ function RigidbodyControl.getAverageAngleVelocity(propsRegistry)
     return weightedAngVel / totalMass
 end
 
-function RigidbodyControl.getTotalInertia(propsRegistry)
+function Rigidbody.getTotalInertia(propsRegistry)
     local totalInertia = Vector()
     local anyProp = false
 
@@ -44,7 +44,7 @@ function RigidbodyControl.getTotalInertia(propsRegistry)
     return totalInertia
 end
 
-function RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
+function Rigidbody.getCenterOfMass(chipEnt, propsRegistry)
     local totalMass = 0
     local weightedPos = Vector()
     
@@ -59,12 +59,12 @@ function RigidbodyControl.getCenterOfMass(chipEnt, propsRegistry)
     return weightedPos / totalMass
 end
 
-function RigidbodyControl.applyLinearForce(chipEnt, force, comPos)
-    if magnitude(force) <= RigidbodyControl.MIN_FORCE then return Vector(), comPos end
+function Rigidbody.applyLinearForce(chipEnt, force, comPos)
+    if VectorMath.magnitude(force) <= Rigidbody.MIN_FORCE then return Vector(), comPos end
 
     chipEnt:applyForceOffset(force, comPos or chipEnt:getPos())
 
     return force, comPos
 end
 
-return RigidbodyControl
+return Rigidbody
