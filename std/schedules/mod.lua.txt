@@ -1,0 +1,13 @@
+--@include starfall_shenanigans/std/schedules/classes.lua.txt
+--@include starfall_shenanigans/std/schedules/functions.lua.txt
+
+local Schedules = {}
+
+Schedules.Classes = require("starfall_shenanigans/std/schedules/classes.lua.txt")
+Schedules.Functions = require("starfall_shenanigans/std/schedules/functions.lua.txt")
+
+Schedules.newSchedule = Schedules.Classes.newSchedule
+Schedules.registerSystem = Schedules.Functions.registerSystem
+Schedules.runSystems = Schedules.Functions.runSystems
+
+return Schedules

@@ -1,0 +1,9 @@
+--@include starfall_shenanigans/hoverbike/debug/log/functions.lua.txt
+
+local Log = {
+    Functions = require("starfall_shenanigans/hoverbike/debug/log/functions.lua.txt")
+}
+
+Log.debugPrint = Log.Functions.debugPrint
+
+return Log

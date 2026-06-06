@@ -1,0 +1,22 @@
+--@include starfall_shenanigans/hoverbike/props/functions.lua.txt
+--@include starfall_shenanigans/hoverbike/props/seat/constants.lua.txt
+
+local PropFunctions = require("starfall_shenanigans/hoverbike/props/functions.lua.txt")
+local SeatConstants = require("starfall_shenanigans/hoverbike/props/seat/constants.lua.txt")
+
+local SeatFunctions = {}
+
+function SeatFunctions.spawn(chipEnt)
+    PropFunctions.spawnSeat(
+        chipEnt:getPos() + SeatConstants.OFFSET,
+        chipEnt:getAngles(),
+        SeatConstants.MODEL,
+        SeatConstants.FROZEN,
+        SeatConstants.NAME,
+        function(seat)
+            constraint.weld(seat, chipEnt)
+        end
+    )
+end
+
+return SeatFunctions

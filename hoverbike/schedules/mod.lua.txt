@@ -1,0 +1,65 @@
+--@include starfall_shenanigans/hoverbike/props/systems.lua.txt
+--@include starfall_shenanigans/hoverbike/control/systems.lua.txt
+--@include starfall_shenanigans/std/schedules/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/startup/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/think/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/entity_removed/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/player_disconnected/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/player_physics_pickup/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/physgun_pickup/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/schedules/physgun_drop/mod.lua.txt
+
+local PropSystems = require("starfall_shenanigans/hoverbike/props/systems.lua.txt")
+local ControlSystems = require("starfall_shenanigans/hoverbike/control/systems.lua.txt")
+local StdSchedules = require("starfall_shenanigans/std/schedules/mod.lua.txt")
+
+local Schedules = {
+    STARTUP = require("starfall_shenanigans/hoverbike/schedules/startup/mod.lua.txt"),
+    THINK = require("starfall_shenanigans/hoverbike/schedules/think/mod.lua.txt"),
+    ENTITY_REMOVED = require("starfall_shenanigans/hoverbike/schedules/entity_removed/mod.lua.txt"),
+    PLAYER_DISCONNECTED = require("starfall_shenanigans/hoverbike/schedules/player_disconnected/mod.lua.txt"),
+    PLAYER_PHYSICS_PICKUP = require("starfall_shenanigans/hoverbike/schedules/player_physics_pickup/mod.lua.txt"),
+    PHYSGUN_PICKUP = require("starfall_shenanigans/hoverbike/schedules/physgun_pickup/mod.lua.txt"),
+    PHYSGUN_DROP = require("starfall_shenanigans/hoverbike/schedules/physgun_drop/mod.lua.txt"),
+    initialized = false
+}
+
+Schedules.THINK.startupSchedule = Schedules.STARTUP
+
+function Schedules.register(schedule, systemName, run)
+    StdSchedules.registerSystem(schedule, systemName, run)
+end
+
+function Schedules.installSystems()
+    if Schedules.initialized then return end
+
+    PropSystems.register(Schedules)
+    ControlSystems.register(Schedules)
+    Schedules.initialized = true
+end
+
+function Schedules.runThink()
+    Schedules.THINK.run()
+end
+
+function Schedules.runEntityRemoved(ent)
+    Schedules.ENTITY_REMOVED.run(ent)
+end
+
+function Schedules.runPlayerDisconnected(ply)
+    Schedules.PLAYER_DISCONNECTED.run(ply)
+end
+
+function Schedules.runPlayerPhysicsPickup(ply, ent)
+    Schedules.PLAYER_PHYSICS_PICKUP.run(ply, ent)
+end
+
+function Schedules.runPhysgunPickup(ply, ent)
+    Schedules.PHYSGUN_PICKUP.run(ply, ent)
+end
+
+function Schedules.runPhysgunDrop(ply, ent)
+    Schedules.PHYSGUN_DROP.run(ply, ent)
+end
+
+return Schedules

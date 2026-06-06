@@ -1,0 +1,3 @@
+--@include starfall_shenanigans/std/pipeline/classes.lua.txt
+
+return require("starfall_shenanigans/std/pipeline/classes.lua.txt")

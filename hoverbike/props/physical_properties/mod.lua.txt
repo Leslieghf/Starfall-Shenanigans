@@ -1,0 +1,19 @@
+--@include starfall_shenanigans/hoverbike/props/physical_properties/functions.lua.txt
+--@include starfall_shenanigans/hoverbike/props/physical_properties/types.lua.txt
+
+local Functions = require("starfall_shenanigans/hoverbike/props/physical_properties/functions.lua.txt")
+local Types = require("starfall_shenanigans/hoverbike/props/physical_properties/types.lua.txt")
+
+local PhysicalProperties = {
+    Functions = Functions,
+    Types = Types
+}
+
+PhysicalProperties.refreshIfNeeded = Functions.refreshIfNeeded
+PhysicalProperties.invalidate = Functions.invalidate
+PhysicalProperties.get = Functions.get
+PhysicalProperties.getMass = Functions.getMass
+PhysicalProperties.getTotalInertia = Functions.getTotalInertia
+PhysicalProperties.getCenterOfMass = Functions.getCenterOfMass
+
+return PhysicalProperties

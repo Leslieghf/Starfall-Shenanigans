@@ -1,0 +1,11 @@
+--@include starfall_shenanigans/std/schedules/mod.lua.txt
+
+local StdSchedules = require("starfall_shenanigans/std/schedules/mod.lua.txt")
+
+local PlayerDisconnectedSchedule = StdSchedules.newSchedule("player_disconnected")
+
+function PlayerDisconnectedSchedule.run(ply)
+    return StdSchedules.runSystems(PlayerDisconnectedSchedule, ply)
+end
+
+return PlayerDisconnectedSchedule

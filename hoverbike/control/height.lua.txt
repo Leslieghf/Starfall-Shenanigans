@@ -1,0 +1,87 @@
+--@include starfall_shenanigans/hoverbike/constants.lua.txt
+--@include starfall_shenanigans/std/math/scalar/mod.lua.txt
+
+local Constants = require("starfall_shenanigans/hoverbike/constants.lua.txt")
+local ScalarMath = require("starfall_shenanigans/std/math/scalar/mod.lua.txt")
+local Height = {}
+
+Height.DOUBLE_TAP_WINDOW = 0.3
+Height.LOG_RATE = 0.9
+Height.LOG_OFFSET = 80
+Height.MAX_DT = 0.05
+
+Height.TargetHeight = Constants.TARGET_HEIGHT
+Height.FlightEnabled = false
+Height.LastJumpTapAt = nil
+Height.JumpWasDown = false
+Height.LastUpdateAt = nil
+
+local function updateDt()
+    local now = timer.curtime()
+    local dt = Height.LastUpdateAt and now - Height.LastUpdateAt or 0
+
+    Height.LastUpdateAt = now
+    return math.min(dt, Height.MAX_DT)
+end
+
+local function currentHeightTarget(height)
+    return ScalarMath.clamp(
+        math.max(height or Constants.TARGET_HEIGHT, Constants.TARGET_HEIGHT),
+        Constants.MIN_TARGET_HEIGHT,
+        Constants.MAX_TARGET_HEIGHT
+    )
+end
+
+local function increaseTarget(dt)
+    local target = (Height.TargetHeight + Height.LOG_OFFSET) * math.exp(Height.LOG_RATE * dt) - Height.LOG_OFFSET
+    Height.TargetHeight = ScalarMath.clamp(target, Constants.MIN_TARGET_HEIGHT, Constants.MAX_TARGET_HEIGHT)
+end
+
+function Height.resetInputState()
+    Height.LastJumpTapAt = nil
+    Height.JumpWasDown = false
+    Height.LastUpdateAt = nil
+end
+
+function Height.resetTarget()
+    Height.TargetHeight = Constants.TARGET_HEIGHT
+    Height.FlightEnabled = false
+end
+
+function Height.enableAt(height)
+    Height.TargetHeight = currentHeightTarget(height)
+    Height.FlightEnabled = true
+end
+
+function Height.toggle(height)
+    if Height.FlightEnabled then
+        Height.resetTarget()
+    else
+        Height.enableAt(height)
+    end
+end
+
+function Height.update(input, height)
+    local dt = updateDt()
+    local jumpDown = input.active and input.jumpDown
+    local now = timer.curtime()
+
+    if jumpDown and not Height.JumpWasDown then
+        if Height.LastJumpTapAt and now - Height.LastJumpTapAt <= Height.DOUBLE_TAP_WINDOW then
+            Height.toggle(height)
+            Height.LastJumpTapAt = nil
+        else
+            Height.LastJumpTapAt = now
+        end
+    end
+
+    Height.JumpWasDown = jumpDown
+
+    if Height.FlightEnabled and jumpDown then
+        increaseTarget(dt)
+    end
+
+    return Height.TargetHeight
+end
+
+return Height

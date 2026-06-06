@@ -1,0 +1,7 @@
+--@include starfall_shenanigans/hoverbike/height/trace/mod.lua.txt
+
+local Height = {}
+
+Height.Trace = require("starfall_shenanigans/hoverbike/height/trace/mod.lua.txt")
+
+return Height

@@ -1,0 +1,9 @@
+--@include starfall_shenanigans/hoverbike/debug/debug_visualizer.lua.txt
+--@include starfall_shenanigans/hoverbike/debug/log/mod.lua.txt
+
+local Debug = {}
+
+Debug.Visualizer = require("starfall_shenanigans/hoverbike/debug/debug_visualizer.lua.txt")
+Debug.Log = require("starfall_shenanigans/hoverbike/debug/log/mod.lua.txt")
+
+return Debug

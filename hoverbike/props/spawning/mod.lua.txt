@@ -1,0 +1,18 @@
+--@include starfall_shenanigans/hoverbike/props/spawning/functions.lua.txt
+--@include starfall_shenanigans/hoverbike/props/spawning/types.lua.txt
+
+local Functions = require("starfall_shenanigans/hoverbike/props/spawning/functions.lua.txt")
+local Types = require("starfall_shenanigans/hoverbike/props/spawning/types.lua.txt")
+
+local Spawning = {
+    Functions = Functions,
+    Types = Types,
+    SpawnPipeline = Types.SpawnPipeline
+}
+
+Spawning.spawn = Functions.spawn
+Spawning.spawnSeat = Functions.spawnSeat
+Spawning.update = Functions.update
+Spawning.size = Functions.size
+
+return Spawning

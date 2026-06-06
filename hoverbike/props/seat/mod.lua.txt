@@ -1,0 +1,11 @@
+--@include starfall_shenanigans/hoverbike/props/seat/constants.lua.txt
+--@include starfall_shenanigans/hoverbike/props/seat/functions.lua.txt
+
+local Seat = {
+    Constants = require("starfall_shenanigans/hoverbike/props/seat/constants.lua.txt"),
+    Functions = require("starfall_shenanigans/hoverbike/props/seat/functions.lua.txt")
+}
+
+Seat.spawn = Seat.Functions.spawn
+
+return Seat
