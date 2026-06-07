@@ -2,6 +2,7 @@
 - Vertical Movement works as intended, but the intentions are stupid
 - Buggy/glitchy when grabbed with the physgun by the seat
 - Sometimes buggy/glitchy after being grabbed with the physgun at all
+- When briefly touching with the physgun the hoverbike sometimes suddenly tilts to one direction like a spasm, and then resumes normal rotational stabilization as if nothing happened.
 - Everything feels sluggish. Rebounding from being below the TARGET_HEIGHT is really funny and bouncy and exactly like it should be. Literally every other bit of the movement feels sluggish/too-perfect.
 - It is highly suspicious that we are applying the force with the COM as an offset, but we are applying it *to* only the chip entity. I do feel like proportionally sharing the required force between props makes more sense? But maybe it's computationally more expensive?
 - Mass independence would be cool, aka the hoverbike could always experience the same trajectory profile and general feel while being free to add props with whatever weight willy-nilly.
