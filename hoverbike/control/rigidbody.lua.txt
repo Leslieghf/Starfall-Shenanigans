@@ -5,6 +5,7 @@ local VectorMath = require("starfall_shenanigans/std/math/vector/mod.lua.txt")
 local Rigidbody = {}
 
 Rigidbody.MIN_FORCE = 0.001
+Rigidbody.MIN_TORQUE = 0.001
 
 function Rigidbody.getMass(propsRegistry)
     local totalMass = 0
@@ -59,12 +60,85 @@ function Rigidbody.getCenterOfMass(chipEnt, propsRegistry)
     return weightedPos / totalMass
 end
 
-function Rigidbody.applyLinearForce(chipEnt, force, comPos)
-    if VectorMath.magnitude(force) <= Rigidbody.MIN_FORCE then return Vector(), comPos end
+function Rigidbody.applyDistributedLinearForce(propsRegistry, force, totalMass)
+    if VectorMath.magnitude(force) <= Rigidbody.MIN_FORCE then return Vector() end
 
-    chipEnt:applyForceOffset(force, comPos or chipEnt:getPos())
+    totalMass = totalMass or Rigidbody.getMass(propsRegistry)
+    if not totalMass or totalMass <= 0 then return Vector() end
 
-    return force, comPos
+    local appliedForce = Vector()
+
+    for _, prop in pairs(propsRegistry) do
+        local ent = prop.ent
+        if ent and ent:isValid() then
+            local massShare = ent:getMass() / totalMass
+            local propForce = force * massShare
+
+            ent:applyForceOffset(propForce, ent:getPos())
+            appliedForce = appliedForce + propForce
+        end
+    end
+
+    return appliedForce
+end
+
+local function momentOnWorldAxis(ent, worldAxis)
+    local localAxis = VectorMath.normalized(VectorMath.worldToLocal(ent, worldAxis))
+    local inertia = ent:getInertia()
+
+    return
+        math.abs(inertia.x) * localAxis.x * localAxis.x +
+        math.abs(inertia.y) * localAxis.y * localAxis.y +
+        math.abs(inertia.z) * localAxis.z * localAxis.z
+end
+
+function Rigidbody.applyDistributedTorque(propsRegistry, angularImpulse)
+    local impulseMagnitude = VectorMath.magnitude(angularImpulse)
+    if impulseMagnitude <= Rigidbody.MIN_TORQUE then return Vector() end
+
+    local impulseAxis = angularImpulse / impulseMagnitude
+    local props = {}
+    local totalMoment = 0
+    local totalMass = 0
+
+    for _, prop in pairs(propsRegistry) do
+        local ent = prop.ent
+        if ent and ent:isValid() then
+            local moment = momentOnWorldAxis(ent, impulseAxis)
+            local mass = ent:getMass()
+
+            table.insert(props, {
+                ent = ent,
+                moment = moment,
+                mass = mass
+            })
+
+            totalMoment = totalMoment + moment
+            totalMass = totalMass + mass
+        end
+    end
+
+    if #props == 0 then return Vector() end
+
+    local appliedImpulse = Vector()
+
+    for _, prop in ipairs(props) do
+        local share
+
+        if totalMoment > 0 then
+            share = prop.moment / totalMoment
+        elseif totalMass > 0 then
+            share = prop.mass / totalMass
+        else
+            share = 1 / #props
+        end
+
+        local propImpulse = angularImpulse * share
+        prop.ent:applyTorque(propImpulse)
+        appliedImpulse = appliedImpulse + propImpulse
+    end
+
+    return appliedImpulse
 end
 
 return Rigidbody

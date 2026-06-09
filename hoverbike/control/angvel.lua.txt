@@ -1,8 +1,10 @@
 --@include starfall_shenanigans/std/math/scalar/mod.lua.txt
 --@include starfall_shenanigans/std/math/vector/mod.lua.txt
+--@include starfall_shenanigans/hoverbike/control/rigidbody.lua.txt
 
 local ScalarMath = require("starfall_shenanigans/std/math/scalar/mod.lua.txt")
 local VectorMath = require("starfall_shenanigans/std/math/vector/mod.lua.txt")
+local Rigidbody = require("starfall_shenanigans/hoverbike/control/rigidbody.lua.txt")
 
 local AngVel = {}
 AngVel.UPRIGHT_FACTOR = 150.0
@@ -94,7 +96,7 @@ function AngVel.getUprightIntegralTorque(ent, inertia, uprightErrorAxis)
     return VectorMath.localInertiaTorqueToWorld(ent, inertia, localIntegralAxis, AngVel.UPRIGHT_INTEGRAL_FACTOR)
 end
 
-function AngVel.applyTorque(ent, springTorque, integralTorque, dampingTorque)
+function AngVel.applyTorque(propsRegistry, springTorque, integralTorque, dampingTorque)
     local now = timer.curtime()
     local dt = AngVel.LastTorqueAt and now - AngVel.LastTorqueAt or 0
     dt = math.min(dt, AngVel.UPRIGHT_INTEGRAL_MAX_DT)
@@ -102,8 +104,7 @@ function AngVel.applyTorque(ent, springTorque, integralTorque, dampingTorque)
 
     local torque = springTorque + integralTorque + dampingTorque
     local angularImpulse = torque * dt
-    ent:applyTorque(angularImpulse)
-    return angularImpulse
+    return Rigidbody.applyDistributedTorque(propsRegistry, angularImpulse)
 end
 
 return AngVel

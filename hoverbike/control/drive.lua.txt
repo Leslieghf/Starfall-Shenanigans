@@ -44,14 +44,14 @@ function Drive.getYawTorque(ent, input, inertia)
     return VectorMath.localInertiaTorqueToWorld(ent, inertia, localYawAxis, Drive.YAW_FACTOR) * torqueDt()
 end
 
-function Drive.apply(ent, input, mass, inertia, comPos)
+function Drive.apply(propsRegistry, ent, input, mass, inertia)
     local force = Drive.getForce(ent, input, mass)
     local torque = Drive.getYawTorque(ent, input, inertia)
 
-    force = Rigidbody.applyLinearForce(ent, force, comPos)
+    force = Rigidbody.applyDistributedLinearForce(propsRegistry, force, mass)
 
     if VectorMath.magnitude(torque) > Drive.MIN_TORQUE then
-        ent:applyTorque(torque)
+        torque = Rigidbody.applyDistributedTorque(propsRegistry, torque)
     end
 
     return force, torque

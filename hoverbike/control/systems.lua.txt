@@ -39,7 +39,6 @@ local function updateFlight()
     local vel = chipEnt:getVelocity()
     local totalMass = Props.getMass()
     local totalInertia = Props.getTotalInertia()
-    local centerOfMass = Props.getCenterOfMass(chipEnt)
     local input = Control.Input.read(Props)
     local tr = Height.Trace.getTrace(pos)
     local height = Height.Trace.getHeight(tr, pos)
@@ -56,24 +55,24 @@ local function updateFlight()
         dampingForce = Control.Vel.getDampingForce(height, vel.z, targetHeight, totalMass)
 
         appliedForce = Control.Vel.applyForce(
-            chipEnt,
+            Props.PhysicalRegistry,
             gravityForce,
             springForce,
             dampingForce,
-            centerOfMass
+            totalMass
         )
     end
 
     Control.Vel.debugPrint(tr, height, targetHeight, vel.z, totalMass, gravityForce, springForce, dampingForce, appliedForce)
 
-    local driveForce, driveTorque = Control.Drive.apply(chipEnt, input, totalMass, totalInertia, centerOfMass)
+    local driveForce, driveTorque = Control.Drive.apply(Props.PhysicalRegistry, chipEnt, input, totalMass, totalInertia)
     appliedForce = appliedForce + driveForce
     appliedTorque = appliedTorque + driveTorque
 
     local uprightErrorAxis = Control.AngVel.getUprightErrorAxis(chipEnt, Control.AngVel.TARGET_UP)
     if Control.AngVel.shouldApplyTorque(chipEnt, uprightErrorAxis) then
         appliedTorque = appliedTorque + Control.AngVel.applyTorque(
-            chipEnt,
+            Props.PhysicalRegistry,
             Control.AngVel.getUprightSpringTorque(chipEnt, totalInertia, uprightErrorAxis),
             Control.AngVel.getUprightIntegralTorque(chipEnt, totalInertia, uprightErrorAxis),
             Control.AngVel.getRotationalDampingTorque(chipEnt, totalInertia)
@@ -110,12 +109,14 @@ end
 local function startManual(ply, ent)
     if isControlledBikePart(ent) then
         Control.Manual.pickup(ent)
+        resetFlightState()
     end
 end
 
 local function stopManual(ply, ent)
     if isControlledBikePart(ent) then
         Control.Manual.drop(ent)
+        resetFlightState()
     end
 end
 
